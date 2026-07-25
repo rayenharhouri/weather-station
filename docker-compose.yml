@@ -1,0 +1,140 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: weatherhub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: weatherhub
+      POSTGRES_PASSWORD: weatherhub
+      POSTGRES_DB: weatherhub_master
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weatherhub -d weatherhub_master"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: weatherhub-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+
+  # One-shot: applies master DB migrations and then exits. The backend
+  # service `depends_on` it with `service_completed_successfully` so a
+  # fresh `docker compose up` never races the schema.
+  migrate:
+    build:
+      context: ./backend
+    image: weatherhub-backend:latest
+    container_name: weatherhub-migrate
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment: &backend_env
+      WH_MODE: ${WH_MODE:-demo}
+      NODE_ENV: production
+      MASTER_DB_HOST: timescaledb
+      MASTER_DB_PORT: 5432
+      MASTER_DB_USER: weatherhub
+      MASTER_DB_PASSWORD: weatherhub
+      MASTER_DB_NAME: weatherhub_master
+      TENANT_DB_HOST: timescaledb
+      TENANT_DB_PORT: 5432
+      TENANT_DB_USER: weatherhub
+      TENANT_DB_PASSWORD: weatherhub
+      TENANT_DB_PREFIX: tenant_
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      DEVICE_JWT_SECRET: ${DEVICE_JWT_SECRET:-dev-device-secret-change-me}
+    # Use the compiled JS data-source so we don't need ts-node in the
+    # production image.
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "▸ applying master DB migrations…"
+        node node_modules/typeorm/cli.js migration:run -d dist/database/master-data-source.js
+        echo "▸ applying tenant DB migrations…"
+        node dist/database/scripts/migrate-tenants.js
+        echo "✓ migrate complete"
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    image: weatherhub-backend:latest
+    container_name: weatherhub-backend
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *backend_env
+      PORT: 3001
+      JWT_EXPIRES_IN: 24h
+      DEVICE_JWT_EXPIRES_IN: 365d
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      MQTT_URL: mqtt://mosquitto:1883
+      MQTT_USERNAME: ingest-worker
+      MQTT_PASSWORD: ingest-worker
+      MQTT_TOPIC_PATTERN: tenants/+/stations/+/readings
+      HEDERA_ENABLED: "false"
+      HEDERA_NETWORK: testnet
+      EXPORTS_ROOT: /var/lib/weatherhub/exports
+      EXPORTS_TTL_HOURS: 168
+      EXPORTS_WORKER_TICK_MS: 5000
+      ANCHOR_SCHEDULER_TICK_MS: 300000
+      FORECAST_SCHEDULER_TICK_MS: 600000
+      TOKEN_SWEEPER_TICK_MS: 3600000
+      SWAGGER_ENABLED: "true"
+    ports:
+      - "3001:3001"
+    volumes:
+      - exports_data:/var/lib/weatherhub/exports
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # `NEXT_PUBLIC_*` values are inlined into the JS bundle at build
+        # time, so they must be supplied here, not in `environment`.
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_WH_MODE: ${WH_MODE:-demo}
+    image: weatherhub-frontend:latest
+    container_name: weatherhub-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  timescale_data:
+  mosquitto_data:
+  mosquitto_logs:
+  exports_data:

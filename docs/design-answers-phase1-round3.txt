@@ -1,0 +1,11 @@
+1. Surface stack: (a) Vercel-style hairline. Cards sit on the same near-black as the page; separation is carried by --border-subtle at ~6-8% white opacity in dark mode. No fills, no shadows, 10px card radius. This means trimming v1: --surface-raised collapses to match --surface-base (or near-identical), .elev-1 drops its shadow, the system leans entirely on the border for depth. Plausible's tonal fills are great for marketing dashboards but soften the mood for a 24/7 ops surface. Divider color = --border-subtle to match.
+
+2. Chart treatment: (b) area fill only on single-metric hero views (live page's four charts, dashboard sparklines), pure line charts everywhere else. Lines at 1.5px in the metric token color — full chroma on dark, slightly desaturated for light parity. Horizontal gridlines only, at major ticks, in --border-subtle. No vertical gridlines. Axis labels and tooltips in Geist Mono at the smallest type-scale step. Tooltips are hairline-bordered cards matching (1).
+
+3. Iconography: confirm everything as proposed. Lucide outline at 1.5px stroke. Sizes 16px in tables / 20px in tiles / 24px in nav. Status uses shape, not fill — info=dot, warn=triangle, critical=diamond — in severity color. No custom weather marks; Lucide's Thermometer, Droplets, Gauge, CloudRain, Sun, Wind are sufficient.
+
+4. Empty + loading copy: (b) explanatory but not encouraging. "No readings in the last 24h. Check station connectivity." rather than "No data" alone, and never a chirpy branded voice. Loading: skeleton blocks matching the final layout exactly. Spinner only on the topbar live-connection indicator and inside async buttons during their pending state.
+
+5. Mobile + a11y:
+   Mobile — desktop-primary. Every page must be usable on a phone (no horizontal scroll, every action reachable) but I'm not redesigning anything mobile-first. Site managers checking stations from the field are the mobile use case, not the design driver.
+   A11y — WCAG AA across both themes, full keyboard navigation, visible focus rings on every interactive surface. Not pursuing AAA on body text; it would force abandoning the text-primary / -muted / -subtle three-tier token system for marginal gain on a tool with no long-form reading.

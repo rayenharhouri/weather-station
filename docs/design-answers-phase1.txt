@@ -1,0 +1,15 @@
+1. Tone-setter: Dashboard. Highest surface variety (hero, 6 metric tiles, alerts, forecast, integrity), opened many times a day — getting it right gives me tokens I can derive everywhere else from. Login is too thin to stress-test the system.
+
+2. Mood: Flight deck. Real-time SSE, threshold alerts, and Hedera-anchored integrity proofs are the soul of the product — "calm under pressure" fits. Not warm/editorial, not clinical-cold.
+
+3. Density: (b) mid — 12–16 atoms per dashboard view. Sparser would mean cutting real content I'm not willing to cut; denser would feel trading-desk cramped, which isn't the campus-operations vibe.
+
+4. Light vs dark: Dark primary, light parity. Dark gets first-pass tuning and screenshot duty. Light has to work for daytime users and stakeholder decks but isn't the hero.
+
+5. Color: (b) per-metric stable palette. Each metric (temperature, humidity, pressure, rainfall, light, AQI, battery, signal) gets a stable hue across every chart, tile, and status pill. Severity (info / warn / critical) sits on a separate axis and never collides with metric color.
+
+6. Hard constraints — patterns I don't want to see anywhere:
+   - Gradient headline text (bg-clip-text text-transparent on key nouns).
+   - Decorative blur blobs / atmospheric auras behind cards.
+   - Glassmorphism on default data surfaces. Glass is reserved for floating surfaces (modals, sheets, the login card).
+   - Per-card gradient sweeps as decoration.

@@ -1,26 +1,304 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ─────────────────────────────────────────────────────────────────────
+   WeatherHub flight-deck design system.
+
+   Dark is the reference; light parity is derived. Card surfaces use the
+   same colour as the page; depth comes from a hairline border. All metric
+   colours follow the physical-truth anchor (temperature warm, humidity
+   blue, etc.) with AQI / battery / RSSI held at low chroma so they never
+   collide with severity.
+
+   shadcn tokens (--background, --card, --primary, ...) are aliased to the
+   design tokens so existing shadcn primitives keep rendering through the
+   migration.
+   ───────────────────────────────────────────────────────────────────── */
 
 @theme inline {
+  /* shadcn-compatible tokens — kept so primitives don't break */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Design tokens — short names matching weather station/styles.css */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-hover: var(--border-hover);
+  --color-border-inset: var(--border-inset);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-brand-fg: var(--accent-brand-fg);
+  --color-accent-brand-soft: var(--accent-brand-soft);
+  --color-sev-info: var(--sev-info);
+  --color-sev-warn: var(--sev-warn);
+  --color-sev-critical: var(--sev-critical);
+  --color-sev-success: var(--sev-success);
+
+  /* Metric tokens — physical-truth anchor */
+  --color-m-temp: var(--m-temp);
+  --color-m-humidity: var(--m-humidity);
+  --color-m-pressure: var(--m-pressure);
+  --color-m-rainfall: var(--m-rainfall);
+  --color-m-light: var(--m-light);
+  --color-m-aqi: var(--m-aqi);
+  --color-m-battery: var(--m-battery);
+  --color-m-rssi: var(--m-rssi);
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+
+  /* Type scale (8 steps + hero) — override Tailwind defaults */
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   14px;
+  --text-lg:   16px;
+  --text-xl:   20px;
+  --text-2xl:  28px;
+  --text-3xl:  40px;
+  --text-hero: 88px;
+  --text-hero--line-height: 0.9;
+  --text-hero--letter-spacing: -0.03em;
+
+  /* Radius scale — flat hairline product, 10px is the card default */
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  10px;
+  --radius-xl:  12px;
+  --radius-pill: 9999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─────────────────────────────────────────────────────────────────────
+   LIGHT mode — derived for parity. Backgrounds near-white with the same
+   cool tint that dark uses; foreground sits at slate near-black.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --bg:               oklch(0.99 0.003 250);
+  --surface:          oklch(0.99 0.003 250);
+  --surface-2:        oklch(0.965 0.004 250);
+
+  --fg:               oklch(0.18 0.005 250);
+  --fg-muted:         oklch(0.42 0.005 250);
+  --fg-subtle:        oklch(0.62 0.005 250);
+
+  --border-subtle:    oklch(0 0 0 / 0.08);
+  --border-hover:     oklch(0 0 0 / 0.16);
+  --border-inset:     oklch(0 0 0 / 0.05);
+
+  /* Tenant accent (ENIT) — same hex in both themes; sits on near-black + near-white */
+  --accent-brand:     #0E5AC0;
+  --accent-brand-fg:  #ffffff;
+  --accent-brand-soft: oklch(0.55 0.18 255 / 0.10);
+
+  /* Severity — slightly higher chroma than dark variants since they sit on a brighter bg */
+  --sev-info:         oklch(0.55 0.15 220);
+  --sev-warn:         oklch(0.65 0.16 65);
+  --sev-critical:     oklch(0.55 0.20 22);
+  --sev-success:      oklch(0.55 0.16 165);
+
+  /* Metric tokens — physical-truth anchor, light variant slightly darker for contrast */
+  --m-temp:           oklch(0.62 0.18 48);
+  --m-humidity:       oklch(0.60 0.15 222);
+  --m-pressure:       oklch(0.55 0.16 250);
+  --m-rainfall:       oklch(0.52 0.17 232);
+  --m-light:          oklch(0.72 0.16 95);
+  --m-aqi:            oklch(0.58 0.10 152);
+  --m-battery:        oklch(0.55 0.06 280);
+  --m-rssi:           oklch(0.55 0.06 200);
+
+  /* shadcn aliases — resolved dynamically through the design tokens above.
+     Because var() is evaluated at use-time, .dark only needs to override the
+     design tokens; these aliases never need to be repeated. */
+  --background:       var(--bg);
+  --foreground:       var(--fg);
+  --card:             var(--bg);
+  --card-foreground:  var(--fg);
+  --popover:          var(--surface-2);
+  --popover-foreground: var(--fg);
+  --primary:          var(--accent-brand);
+  --primary-foreground: var(--accent-brand-fg);
+  --secondary:        var(--surface-2);
+  --secondary-foreground: var(--fg);
+  --muted:            var(--surface-2);
+  --muted-foreground: var(--fg-muted);
+  --accent:           var(--surface-2);
+  --accent-foreground: var(--fg);
+  --destructive:      var(--sev-critical);
+  --destructive-foreground: #ffffff;
+  --border:           var(--border-subtle);
+  --input:            var(--surface-2);
+  --ring:             var(--accent-brand);
+
+  --chart-1: var(--m-temp);
+  --chart-2: var(--m-humidity);
+  --chart-3: var(--m-pressure);
+  --chart-4: var(--m-rainfall);
+  --chart-5: var(--m-light);
+
+  --sidebar:                    var(--bg);
+  --sidebar-foreground:         var(--fg);
+  --sidebar-primary:            var(--accent-brand);
+  --sidebar-primary-foreground: var(--accent-brand-fg);
+  --sidebar-accent:             var(--surface-2);
+  --sidebar-accent-foreground:  var(--fg);
+  --sidebar-border:             var(--border-subtle);
+  --sidebar-ring:               var(--accent-brand);
+
+  --radius: 10px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   DARK mode — the reference. Values copied directly from
+   `weather station/styles.css` so the live product matches the canvas.
+   ───────────────────────────────────────────────────────────────────── */
+.dark {
+  --bg:               oklch(0.165 0.005 250);
+  --surface:          oklch(0.165 0.005 250);
+  --surface-2:        oklch(0.20 0.005 250);
+
+  --fg:               oklch(0.98 0 0);
+  --fg-muted:         oklch(0.72 0.005 250);
+  --fg-subtle:        oklch(0.52 0.005 250);
+
+  --border-subtle:    oklch(1 0 0 / 0.07);
+  --border-hover:     oklch(1 0 0 / 0.13);
+  --border-inset:     oklch(1 0 0 / 0.05);
+
+  --accent-brand:     #0E5AC0;
+  --accent-brand-fg:  #ffffff;
+  --accent-brand-soft: oklch(0.55 0.18 255 / 0.14);
+
+  --sev-info:         oklch(0.70 0.10 220);
+  --sev-warn:         oklch(0.78 0.13 65);
+  --sev-critical:     oklch(0.68 0.16 22);
+  --sev-success:      oklch(0.72 0.14 165);
+
+  --m-temp:           oklch(0.74 0.15 48);
+  --m-humidity:       oklch(0.76 0.12 222);
+  --m-pressure:       oklch(0.70 0.13 250);
+  --m-rainfall:       oklch(0.66 0.14 232);
+  --m-light:          oklch(0.86 0.13 95);
+  --m-aqi:            oklch(0.72 0.06 152);
+  --m-battery:        oklch(0.68 0.04 280);
+  --m-rssi:           oklch(0.70 0.04 200);
+
+  /* shadcn override that differs only in dark: white-on-red works in both themes */
+  --destructive-foreground: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01" 1, "cv11" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Tabular numerics — pair with .mono or use alone on Geist Sans data labels */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Hairline divider — used as a 1px separator between rows or sections */
+  .hairline {
+    background: var(--border-subtle);
+    height: 1px;
+    width: 100%;
+    border: 0;
+    margin: 0;
+  }
+  .vhairline {
+    background: var(--border-subtle);
+    width: 1px;
+    align-self: stretch;
+  }
+
+  /* Live indicator — the one animated pulse per view. Lives in markup as
+     `<span class="live-dot" />`. Add .warn / .offline to disable the pulse. */
+  .live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sev-success);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--sev-success) 55%, transparent);
+    animation: live-pulse 1.6s ease-in-out infinite;
+  }
+  .live-dot.warn    { background: var(--sev-warn);     animation: none; }
+  .live-dot.offline { background: var(--sev-critical); animation: none; }
+
+  @keyframes live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sev-success) 55%, transparent); }
+    50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--sev-success) 0%,  transparent); }
+  }
+}
+
+/* Freeze the live-dot pulse while the Live page exports a PNG snapshot,
+   so the captured frame is deterministic regardless of pulse phase. */
+.snap-freeze .live-dot {
+  animation: none !important;
+  box-shadow: 0 0 0 0 transparent !important;
+}
+
+/* Honor reduced-motion across every animation in the product. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .live-dot {
+    animation: none !important;
+    box-shadow: none !important;
+  }
 }

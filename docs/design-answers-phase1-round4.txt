@@ -1,0 +1,11 @@
+1. Tenant accent hex — for design-validation purposes use ENIT = #0E5AC0 (strong university blue, OKLCH ≈ 0.55 0.19 245). Pops cleanly against near-black with hairline borders, stays well clear of severity reds/oranges. I'll confirm the actual ENIT brand color with the campus comms team before launch and swap the hex — the token slot (--accent-brand) stays the same regardless.
+
+2. Hero weather card — temperature numeral dominates. ~80-96px Geist Mono, tabular-nums, with °C as a sub-scale unit (smaller, in muted token). The condition glyph (Sun / CloudRain / Wind) is supporting context at ~24-32px Lucide outline beside or above the numeral. The current text-7xl was on the right track, just needs to be in Mono not Sans. Number is the gauge reading; glyph is the gauge label.
+
+3. Severity OKLCH — re-tune against the new flat surface. Current v1 values (info L0.7 C0.14 H220, warn L0.75 C0.16 H65, danger L0.7 C0.2 H22, success L0.72 C0.18 H165 in dark) were calibrated against translucent glass; on hairline-on-near-black they'll read slightly more neon. Pull chroma back where needed, keep the same hue anchors, verify each against --border-subtle and the actual card surface before shipping.
+
+4. Topbar live-connection — dot + text, trailing position (right side of topbar, immediately before the user avatar). States: "Live" (connected, dot in aurora-green, one continuous pulse), "Reconnecting…" (warn-yellow, no pulse), "Offline" (danger-red, no pulse). This is the one live pulse per page — every other status dot on the dashboard is static, as locked.
+
+5. Tone-setter pass scope — desktop + mobile in the same pass, both wireframed. Desktop gets the visual perfection pass; mobile gets a "doesn't break, no horizontal scroll, every action reachable" pass at the wireframe stage. Validating both together avoids a desktop rethink when mobile constraints surface (the 6-tile metric grid collapsing to a 2-col mobile layout is the obvious failure mode I want to catch early).
+
+go.

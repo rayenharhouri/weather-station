@@ -1,0 +1,128 @@
+# Researcher API Portal — Feature Scoping Prompt
+
+Paste the block below into the **same Claude Design conversation** where Phase 1/2/3 of the dashboard is happening. It pauses the dashboard work, scopes a new surface (the researcher API portal), and runs the same discovery → direction → page contract you've been using.
+
+If you'd rather use it in a fresh Claude conversation, prepend the **Project context** block from `docs/design-handoff-prompt.md` first.
+
+---
+
+Pause the dashboard work. I need to scope a new surface of the product before
+we go further, because it changes how I think about the dashboard's chrome.
+
+
+# Why this matters
+
+WeatherHub is a **university research project** at heart, not a SaaS dashboard.
+The operations surface we've been designing (live readings, alerts, integrity)
+is one audience: admins and viewers who run the stations day-to-day.
+
+The second audience is **researchers** — academics at ENIT / ESPRIT / INSAT
+and visiting collaborators who want **programmatic access to the data** for
+their own analysis, papers, and student projects. They don't want the live
+dashboard. They want APIs, docs, exports, and a place to manage their access.
+
+I want this to be a **separate UI surface** from the operations dashboard.
+Different mental model, different chrome, different default page. Researchers
+shouldn't see the alerts panel; admins shouldn't see the API console.
+Conceptually it's "WeatherHub Console" (ops) vs "WeatherHub for Research"
+(data + APIs).
+
+
+# What this surface needs to do
+
+At minimum:
+- Personal API tokens — generate, name, expire, revoke
+- Endpoint documentation — every REST route + the SSE stream, with auth and
+  example payloads
+- A query builder / playground — pick a station, metric, time range, and
+  aggregation interval; see the response inline; copy a curl / Python / R
+  snippet
+- Bulk data export — CSV, JSON, maybe Parquet; sync for small queries,
+  async for large ones
+- Per-token usage and rate-limit visibility
+- Possibly: dataset citation strings / DOIs, sample datasets that don't
+  require auth
+
+
+# Constraints carried over from the existing design system
+
+Don't re-discover these — they're locked from earlier rounds:
+- Flight-deck mood, dark primary with light parity
+- Vercel-style hairline surfaces (no fills, no shadows, 10px radius)
+- Per-metric stable color palette; severity on its own axis
+- Geist Sans for UI, Geist Mono for every numeric
+- 200ms motion ceiling, route transitions off
+- Tenant single-hue accent injection (b)
+- WCAG AA, desktop-primary, mobile must work but not designed-first
+- The "do not ship" list: no gradient headline text, no decorative blobs,
+  no glass on data surfaces, no per-card gradient sweeps
+
+The researcher portal inherits all of this. What changes is structure,
+chrome, and information architecture — not the visual language.
+
+
+# What I want from you
+
+Same Phase 1 / Phase 2 / Phase 3 contract as the dashboard work.
+
+## Phase 1 — Discovery (now)
+
+Ask me 3–5 targeted questions per turn. Wait for my answers. Don't propose
+layouts, mocks, or code. At minimum, cover these dimensions — pick the most
+consequential first:
+
+1. **Separation strategy.** Subdomain (`research.weatherhub.local`) vs route
+   prefix (`/research`) vs an entirely different deploy. Trade-offs around
+   tenant routing and shared auth.
+2. **Shell relationship.** Do the operations dashboard and the researcher
+   portal share a topbar with a product switcher, or are they wholly separate
+   shells with no visible connection?
+3. **Default entry page.** What's the first thing a researcher sees on
+   landing — a docs index, a query playground, a "Datasets" catalog, a
+   token-management page?
+4. **Role + permission model.** Is "researcher" a distinct role from
+   "admin" / "viewer", or an additive capability anyone can be granted?
+   Can an admin generate API tokens for someone, or only for themselves?
+5. **Tenant scope of API tokens.** Single-tenant only (ENIT keys only see
+   ENIT data) or can tokens be issued for cross-tenant studies with explicit
+   approval? This affects the token UI fundamentally.
+6. **Export tier policy.** Hard row cap on synchronous exports (e.g. 100k
+   rows), async job queue above that — or always sync?
+7. **Academic citation.** Do datasets need a citation block / DOI per
+   station-year? Universities sometimes require this for funded research.
+8. **Code-snippet languages.** Which 2–3 do I want featured in the
+   playground's "copy as code" button — curl, Python (requests/pandas),
+   R (httr), MATLAB, Julia?
+9. **Quota model.** Reads-per-day per token, or unlimited within reason?
+   Affects whether the token UI needs a usage gauge.
+10. **Public sample dataset.** Should an evaluating researcher be able to
+    pull a small no-auth sample before requesting full access?
+
+Don't ask all ten. Pick 3–5 you think matter most given everything else
+that's locked, and ask those.
+
+## Phase 2 — Direction
+
+Once Phase 1 is done, summarize the researcher portal direction in one tight
+page: separation strategy, shell decision, default entry page, role model,
+information architecture (top-level sections), and how it inherits the
+flight-deck visual language.
+
+Mark anything I haven't decided as `[OPEN]`. Don't write code.
+
+## Phase 3 — Page-by-page
+
+Same protocol as the dashboard: one page at a time, starting with the
+default entry page. Written layout description, component list, ASCII
+wireframe (desktop + mobile), no code until I sign off.
+
+
+# Behavioral note
+
+The dashboard work is **paused**, not abandoned. Once Phase 3 of the
+researcher portal lands a clear direction, we'll either continue the
+dashboard from where we left off, or refactor the dashboard's chrome
+based on what the new surface taught us about the navigation model.
+
+Start Phase 1 of the researcher portal now. First response is 3–5
+questions only.

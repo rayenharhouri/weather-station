@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WeatherHub Backend · Architecture Diagrams</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 14mm 18mm 14mm;
+    @bottom-center {
+      content: "WeatherHub Backend · Architecture · " counter(page) " / " counter(pages);
+      font-family: "Inter", "Helvetica", sans-serif;
+      font-size: 8pt;
+      color: #6b7280;
+    }
+  }
+  @page :first { @bottom-center { content: none; } }
+
+  :root {
+    --ink: #0f172a;
+    --muted: #475569;
+    --line: #e2e8f0;
+    --accent: #0ea5e9;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 22pt;
+    margin: 0 0 4mm 0;
+    letter-spacing: -0.015em;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 3mm;
+  }
+  h2 {
+    font-size: 13pt;
+    margin: 8mm 0 3mm 0;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    color: var(--muted);
+    margin: 5mm 0 2mm 0;
+    page-break-after: avoid;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 6mm 0;
+  }
+  p {
+    margin: 1mm 0;
+    color: var(--muted);
+  }
+  figure.diagram {
+    page-break-inside: avoid;
+    margin: 3mm 0 8mm 0;
+    text-align: center;
+  }
+  figure.diagram img {
+    max-width: 100%;
+    max-height: 245mm;
+    height: auto;
+  }
+  table.md-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0;
+    font-size: 9.5pt;
+  }
+  table.md-table th, table.md-table td {
+    border: 1px solid var(--line);
+    padding: 1.5mm 2mm;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.md-table th {
+    background: #f8fafc;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<h1>WeatherHub Backend — Architecture Diagrams</h1>
+
+<p>Pure-tech architecture reference. Diagrams only.</p>
+
+<hr/>
+
+<h2>1. System topology</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-01.png" alt="Diagram 01" /></figure>
+
+
+<hr/>
+
+<h2>2. Multi-tenancy — database-per-tenant</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-02.png" alt="Diagram 02" /></figure>
+
+
+<hr/>
+
+<h2>3. Per-tenant database schema</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-03.png" alt="Diagram 03" /></figure>
+
+
+<hr/>
+
+<h2>4. Live data path — ESP32 reading to browser</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-04.png" alt="Diagram 04" /></figure>
+
+
+<hr/>
+
+<h2>5. Ingest worker — message validation pipeline</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-05.png" alt="Diagram 05" /></figure>
+
+
+<hr/>
+
+<h2>6. SSE fan-out</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-06.png" alt="Diagram 06" /></figure>
+
+
+<hr/>
+
+<h2>7. HTTP request lifecycle through NestJS</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-07.png" alt="Diagram 07" /></figure>
+
+
+<hr/>
+
+<h2>8. Auth flow A — Operator JWT session</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-08.png" alt="Diagram 08" /></figure>
+
+
+<hr/>
+
+<h2>9. Auth flow B — API token (Researcher)</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-09.png" alt="Diagram 09" /></figure>
+
+
+<hr/>
+
+<h2>10. Auth flow C — Device JWT (MQTT only)</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-10.png" alt="Diagram 10" /></figure>
+
+
+<hr/>
+
+<h2>11. Background workers — schedulers + queues</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-11.png" alt="Diagram 11" /></figure>
+
+
+<hr/>
+
+<h2>12. Anchor + integrity verification</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-12.png" alt="Diagram 12" /></figure>
+
+
+<hr/>
+
+<h2>13. Forecast generation</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-13.png" alt="Diagram 13" /></figure>
+
+
+<hr/>
+
+<h2>14. Export job state machine</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-14.png" alt="Diagram 14" /></figure>
+
+
+<hr/>
+
+<h2>15. Export materialiser — streaming write</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-15.png" alt="Diagram 15" /></figure>
+
+
+<hr/>
+
+<h2>16. Rate-limit decision</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-16.png" alt="Diagram 16" /></figure>
+
+
+<hr/>
+
+<h2>17. Observability — request → log line</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-17.png" alt="Diagram 17" /></figure>
+
+
+<hr/>
+
+<h2>18. Module dependency graph</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-18.png" alt="Diagram 18" /></figure>
+
+
+<hr/>
+
+<h2>19. User journey — Operator daily routine</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-19.png" alt="Diagram 19" /></figure>
+
+
+<hr/>
+
+<h2>20. User journey — Researcher onboarding</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-20.png" alt="Diagram 20" /></figure>
+
+
+<hr/>
+
+<h2>21. User journey — ESP32 device lifecycle</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-21.png" alt="Diagram 21" /></figure>
+
+
+<hr/>
+
+<h2>22. Deployment topology (target)</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-22.png" alt="Diagram 22" /></figure>
+
+
+<hr/>
+
+<h2>23. Configuration surface — `WH_MODE` decision tree</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-23.png" alt="Diagram 23" /></figure>
+
+
+<hr/>
+
+<h2>24. Live SSE channel — connection states (browser side)</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-24.png" alt="Diagram 24" /></figure>
+
+
+<hr/>
+
+<h2>25. End-to-end timing budget — reading freshness</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/mermaid-svgs/diagram-25.png" alt="Diagram 25" /></figure>
+
+
+</body>
+</html>

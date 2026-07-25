@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx next *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)",
+      "Bash(npx vitest *)",
+      "Bash(npm test *)",
+      "Bash(which chromium *)",
+      "Read(//usr/bin/**)",
+      "Bash(find /home/fsociety -maxdepth 5 -name \"chrome\" -executable 2>/dev/null | head; df -h /home/fsociety/weather-station | tail -1)",
+      "Read(//home/fsociety/**)",
+      "Bash(/home/fsociety/weather-station/node_modules/.bin/mmdc --version)",
+      "Bash(mkdir -p /home/fsociety/weather-station/docs/_build/mermaid-svgs)",
+      "Bash(node docs/_build/build-architecture-pdf.mjs)",
+      "Bash(sudo -n apt-get install -y libnspr4 libnss3 libasound2t64 libxss1 libxshmfence1 libgbm1 libxcomposite1 libxdamage1 libxrandr2 libxkbcommon0 libpangocairo-1.0-0 libcups2 libatk1.0-0 libatk-bridge2.0-0 libgtk-3-0 fonts-liberation libdrm2)",
+      "Bash(node -e ' *)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)",
+      "Bash(DOCKER_BUILDKIT=1 docker compose build --progress=plain)",
+      "Bash(curl -s -w '\\\\n[%{http_code}]\\\\n' http://localhost:3001/health)",
+      "Bash(curl -s -w '\\\\n[%{http_code}]\\\\n' http://localhost:3001/ready)",
+      "Bash(curl -s -o /dev/null -w '[%{http_code}]\\\\n' http://localhost:3001/docs)",
+      "Bash(curl -s -o /dev/null -w '[%{http_code}]\\\\n' http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w '[%{http_code}]\\\\n' http://localhost:3000/login)",
+      "Bash(node docs/_build/build-architecture-pdf.mjs --input=hardware-bom.md)",
+      "Bash(curl -s -o /dev/null -w 'kroki health: %{http_code}\\\\n' https://kroki.io/)"
+    ],
+    "additionalDirectories": [
+      "/home/fsociety/weather-station/docs/_build"
+    ]
+  }
+}

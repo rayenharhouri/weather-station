@@ -1,0 +1,8 @@
+# PlatformIO build output
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/
+
+# Local secrets — copied from src/config.example.h
+src/config.h

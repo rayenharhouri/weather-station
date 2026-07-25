@@ -1,0 +1,21 @@
+node_modules
+.next
+out
+.git
+.gitignore
+.vscode
+.idea
+*.log
+.env
+.env.local
+.env.*.local
+backend
+e2e
+docs
+mosquitto
+.venv
+weather station*
+Dockerfile
+.dockerignore
+docker-compose.yml
+README.md

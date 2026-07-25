@@ -1,0 +1,10 @@
+1. Palette anchor: (a) physical-truth, not (c). My v1 metric tokens in app/globals.css already implement this — temperature is sunset orange, humidity is sky blue, pressure is cool primary-blue, rainfall is deeper sky-blue, light is sunrise yellow. The "AQI green→red collides with severity" concern in your option (a) is already resolved in v1 by keeping AQI / battery / RSSI in low-chroma neutral tints rather than full saturated ramps. Severity (info / warn / critical) sits entirely on its own axis — locked in last round — so it never competes with metric hue. Switching to (c) would mean rebuilding tokens I already approved.
+
+2. Typography: default — Geist Sans for all UI text, Geist Mono for every numeric (readings, timestamps, lat/long, hash prefix, threshold values, battery %, RSSI). Both are already loaded in app/layout.tsx and wired through v1. Mono-for-numerics is the single biggest move that sells the flight-deck feel — keep it. No serif anywhere, including empty states and the login card.
+
+3. Motion budget: (b) — 200ms ceiling. Numbers crossfade on update via tabular-nums and an opacity blend (not actual digit-roll animation — that reads playful). Charts ease-in new SSE points. Severity badges pulse exactly once on state change, then go quiet. One live pulse per view, which is already a locked rule. Route transitions: off — getting to data fast matters more than transition aesthetics. prefers-reduced-motion honored throughout.
+
+4. Tenant branding: (b) — single-hue accent injection. Each university provides one brand hex; that hue powers --accent-brand and shows up in the primary button + nav-active state. Tenant name + logo lives in the topbar. Metric tokens and severity colors are off-limits — non-negotiable system territory. No tenant-specific typography, no tenant logo on the login card, no per-tenant wordmark treatment.
+
+5. References — apps I actually use that capture the flight-deck-on-dark feel I want:
+   - Vercel's deployments page, Plausible Analytics dashboard

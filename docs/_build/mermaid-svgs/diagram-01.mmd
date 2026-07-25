@@ -1,0 +1,46 @@
+flowchart TB
+    subgraph Edge["Edge / Field"]
+        ESP1["ESP32 · enit · rooftop-A"]
+        ESP2["ESP32 · enit · rooftop-B"]
+        ESP3["ESP32 · esprit · quad"]
+    end
+
+    Broker[("MQTT Broker<br/>(Mosquitto)")]
+
+    subgraph App["NestJS process"]
+        Ingest["Ingest Worker"]
+        API["HTTP + SSE API"]
+        Sched["Schedulers"]
+        ExpW["Exports Worker"]
+    end
+
+    subgraph Storage["Storage layer"]
+        Master[("Master DB<br/>tenants")]
+        T1[("Tenant DB · enit<br/>(TimescaleDB)")]
+        T2[("Tenant DB · esprit<br/>(TimescaleDB)")]
+        Disk["Local FS · exports/"]
+    end
+
+    subgraph Clients
+        Ops["Operations UI<br/>Next.js"]
+        Res["Researcher UI<br/>Next.js"]
+        SDK["SDK / curl / CI"]
+    end
+
+    Ledger[("Hedera HCS<br/>(stubbed today)")]
+
+    ESP1 & ESP2 & ESP3 -- "publish QoS 1" --> Broker
+    Broker -- "subscribe" --> Ingest
+    Ingest --> T1 & T2
+    API --> Master
+    API --> T1 & T2
+    API --> Disk
+    Sched --> T1 & T2
+    Sched -. "anchor" .-> Ledger
+    ExpW --> T1 & T2
+    ExpW --> Disk
+    Ops <-- "JWT" --> API
+    Res <-- "JWT" --> API
+    SDK <-- "API token" --> API
+    API -- "SSE" --> Ops
+    API -- "SSE" --> Res

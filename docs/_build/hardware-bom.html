@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WeatherHub Backend · Architecture Diagrams</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 14mm 18mm 14mm;
+    @bottom-center {
+      content: "WeatherHub Backend · Architecture · " counter(page) " / " counter(pages);
+      font-family: "Inter", "Helvetica", sans-serif;
+      font-size: 8pt;
+      color: #6b7280;
+    }
+  }
+  @page :first { @bottom-center { content: none; } }
+
+  :root {
+    --ink: #0f172a;
+    --muted: #475569;
+    --line: #e2e8f0;
+    --accent: #0ea5e9;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 22pt;
+    margin: 0 0 4mm 0;
+    letter-spacing: -0.015em;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 3mm;
+  }
+  h2 {
+    font-size: 13pt;
+    margin: 8mm 0 3mm 0;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    color: var(--muted);
+    margin: 5mm 0 2mm 0;
+    page-break-after: avoid;
+  }
+  hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 6mm 0;
+  }
+  p {
+    margin: 1mm 0;
+    color: var(--muted);
+  }
+  figure.diagram {
+    page-break-inside: avoid;
+    margin: 3mm 0 8mm 0;
+    text-align: center;
+  }
+  figure.diagram img {
+    max-width: 100%;
+    max-height: 245mm;
+    height: auto;
+  }
+  table.md-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3mm 0;
+    font-size: 9.5pt;
+  }
+  table.md-table th, table.md-table td {
+    border: 1px solid var(--line);
+    padding: 1.5mm 2mm;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.md-table th {
+    background: #f8fafc;
+    font-weight: 600;
+  }
+  /* Tight money cells on the right edge of BOM tables. */
+  table.md-table td:last-child,
+  table.md-table th:last-child {
+    white-space: nowrap;
+  }
+  p {
+    overflow-wrap: anywhere;
+  }
+</style>
+</head>
+<body>
+<h1>WeatherHub — ESP32 station hardware</h1>
+
+<p>A concrete shopping list for an ESP32 weather station that publishes into the WeatherHub backend over MQTT.</p>
+
+<p>**Phase 1 (this doc): tethered prototype.** The board runs from a USB-C cable, no battery, indoor or sheltered placement. Goal is fastest path to "readings landing in the dashboard." ~$35–$50 from Amazon.</p>
+
+<p>**Phase 2 (notes at the end): outdoor / off-grid.** Adds solar panel, 18650 cell, charging board, waterproof enclosure, Stevenson screen. Adds ~$40 and a weekend of mechanical assembly.</p>
+
+<p>The backend ingests these metrics from each station, so the sensor set is chosen to fill them:</p>
+
+<table class="md-table">
+<tr><th>Metric</th><th>Field on `WeatherReading`</th><th>Sensor below</th></tr>
+<tr><td>Temperature (°C)</td><td>`temperatureC`</td><td>BME280 / BME680</td></tr>
+<tr><td>Humidity (%)</td><td>`humidityPct`</td><td>BME280 / BME680</td></tr>
+<tr><td>Pressure (hPa)</td><td>`pressureHpa`</td><td>BME280 / BME680</td></tr>
+<tr><td>Light (lux)</td><td>`lightLux`</td><td>BH1750</td></tr>
+<tr><td>Air quality (AQI)</td><td>`airQualityValue`</td><td>BME680 (VOC) — Tier 2 swap</td></tr>
+<tr><td>Rainfall (mm)</td><td>`rainfallMm`</td><td>Tipping-bucket rain gauge (optional)</td></tr>
+<tr><td>Battery (V)</td><td>`batteryVoltage`</td><td>**null** in prototype (no battery)</td></tr>
+<tr><td>Signal (dBm)</td><td>`signalRssi`</td><td>ESP32 WiFi (no extra HW)</td></tr>
+</table>
+
+<p>The backend already tolerates `null` for every metric — fields you don't wire just don't get reported.</p>
+
+<hr/>
+
+<h2>1. System topology — Phase 1 (USB-C tethered)</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/hardware-bom-svgs/diagram-01.png" alt="Diagram 01" /></figure>
+
+
+<p>Total parts on the critical path: **ESP32 board, 2 I²C sensor modules, USB-C cable, a handful of jumper wires.** That's it.</p>
+
+<hr/>
+
+<h2>2. Bill of materials — Phase 1 prototype</h2>
+
+<p>Search terms are the ones that bring up the right part on Amazon US. Prices are typical 2026 ranges and will move with stock.</p>
+
+<table class="md-table">
+<tr><th>#</th><th>Part</th><th>Search term on Amazon</th><th>Qty</th><th>Est. $ each</th><th>Notes</th></tr>
+<tr><td>1</td><td>ESP32 DevKit **with USB-C**</td><td>`ESP32-S3-DevKitC-1` or `HiLetgo ESP32 USB-C`</td><td>1</td><td>$10 – $15</td><td>Many "NodeMCU ESP32" boards on Amazon now ship with USB-C — confirm in the listing photos. The S3 variant has native USB.</td></tr>
+<tr><td>2</td><td>BME280 module (temp/hum/pres)</td><td>`BME280 I2C 3.3V module`</td><td>1</td><td>$5 – $8</td><td>Confirm BME**280** with humidity, not BMP**280**.</td></tr>
+<tr><td>3</td><td>BH1750 module (lux)</td><td>`BH1750 GY-302 light sensor`</td><td>1</td><td>$4 – $6</td><td>I²C, accurate to ~65k lux.</td></tr>
+<tr><td>4</td><td>USB-C data cable (5V/3A capable)</td><td>`USB-C charging cable data 3ft`</td><td>1</td><td>$5 – $8</td><td>**Data, not charge-only** — needed to flash + power.</td></tr>
+<tr><td>5</td><td>USB-C power supply (or use a laptop)</td><td>`5V 2A USB-C wall charger`</td><td>1</td><td>$5 – $10</td><td>Skip if you'll power from a laptop / hub.</td></tr>
+<tr><td>6</td><td>Dupont jumper wire kit (M-F, M-M)</td><td>`Dupont jumper wires 40-pin`</td><td>1</td><td>$5 – $8</td><td>4 wires per sensor (SDA, SCL, VCC, GND).</td></tr>
+<tr><td>7</td><td>Solderless breadboard (400-tie)</td><td>`400 point solderless breadboard`</td><td>1</td><td>$4 – $7</td><td>Optional but makes wiring far cleaner than dangling Dupont.</td></tr>
+<tr><td></td><td>**Subtotal**</td><td></td><td></td><td>**~ $45**</td><td></td></tr>
+</table>
+
+<h3>Optional add-ons (still Phase 1)</h3>
+
+<table class="md-table">
+<tr><th>Part</th><th>Search term</th><th>Est. $</th><th>Why</th></tr>
+<tr><td>Tipping-bucket rain gauge</td><td>`Misol rain gauge` or `Sparkfun rain gauge`</td><td>$15 – $25</td><td>Adds `rainfallMm`. Only useful outdoors. Skip for indoor prototype.</td></tr>
+<tr><td>BME680 (instead of BME280)</td><td>`BME680 I2C breakout`</td><td>$15 – $25</td><td>Adds `airQualityValue` (VOC index). Same wiring as BME280.</td></tr>
+<tr><td>microSD card module + 32GB</td><td>`microSD card module SPI`</td><td>$8</td><td>Local buffering when WiFi drops. Nice-to-have, not needed for prototype.</td></tr>
+</table>
+
+<hr/>
+
+<h2>3. Wiring — GPIO pin assignment</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/hardware-bom-svgs/diagram-02.png" alt="Diagram 02" /></figure>
+
+
+<p>**Pin reference table:**</p>
+
+<table class="md-table">
+<tr><th>ESP32 pin</th><th>Goes to</th><th>Notes</th></tr>
+<tr><td>GPIO 21</td><td>I²C SDA on both BME280 + BH1750</td><td>Default I²C bus on most ESP32 boards</td></tr>
+<tr><td>GPIO 22</td><td>I²C SCL on both</td><td>Default I²C bus on most ESP32 boards</td></tr>
+<tr><td>3.3V</td><td>VCC on both I²C modules</td><td>**Do NOT use 5V on bare BME280** — it'll fry</td></tr>
+<tr><td>GND</td><td>GND on every module</td><td>Common reference</td></tr>
+<tr><td>GPIO 25</td><td>One side of rain-gauge reed (optional)</td><td>Interrupt-capable; skip if no rain gauge</td></tr>
+<tr><td>USB-C</td><td>Wall adapter or laptop</td><td>Provides 5V + serial for flashing</td></tr>
+</table>
+
+<p>I²C addresses don't collide:</p>
+<p>- BME280: `0x76` (default) or `0x77` (SDO pulled high)</p>
+<p>- BH1750: `0x23` (default) or `0x5C` (ADDR pulled high)</p>
+<p>- BME680: `0x76` or `0x77` (same as BME280; swap parts, no rewire)</p>
+
+<hr/>
+
+<h2>4. Physical assembly — Phase 1</h2>
+
+<p>Indoor / sheltered placement. No enclosure needed; the breadboard sits on a desk or shelf next to the wall outlet.</p>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/hardware-bom-svgs/diagram-03.png" alt="Diagram 03" /></figure>
+
+
+<p>**Placement tips for honest readings**</p>
+
+<p>- Keep the BME280 **away from the ESP32 body** — the regulator on the dev board self-heats and skews temperature by 1–3°C if mounted right next to it. A 10–15cm jumper wire is enough separation.</p>
+<p>- Don't put the sensors on top of a laptop / radiator / sunlit windowsill. Even shaded indoor placement reads ~1°C higher than ambient.</p>
+<p>- The BH1750 needs **direct line of sight to the light source** — pointing it at a wall is going to show 0 lux even in a bright room.</p>
+
+<hr/>
+
+<h2>5. Firmware checklist</h2>
+
+<p>Once the hardware is wired, the firmware needs to:</p>
+
+<p>1. Connect to WiFi.</p>
+<p>2. Read I²C sensors (BME280, BH1750).</p>
+<p>3. Build the JSON payload:</p>
+<p>   ```</p>
+<p>   { "token": "&lt;DEVICE_JWT&gt;",</p>
+<p>     "reading": {</p>
+<p>       "recordedAt": "&lt;ISO timestamp&gt;",</p>
+<p>       "temperatureC": ..., "humidityPct": ..., "pressureHpa": ...,</p>
+<p>       "lightLux": ...,</p>
+<p>       "signalRssi": &lt;wifi.RSSI()&gt;</p>
+<p>     } }</p>
+<p>   ```</p>
+<p>   Fields you don't measure (`rainfallMm`, `airQualityValue`, `batteryVoltage`) are omitted — the backend treats absent fields as null.</p>
+<p>4. Publish to `tenants/&lt;tenant-slug&gt;/stations/&lt;station-uuid&gt;/readings` at QoS 1.</p>
+<p>5. Sleep for the publish interval (5 min is the default the dashboard expects).</p>
+<p>   - **Tethered mode** can use `delay()` / `vTaskDelay()` — no need for deep sleep since power is unlimited.</p>
+
+<p>Get the device JWT (and the exact topic) from:</p>
+
+<p>```sh</p>
+<p>docker compose exec backend node dist/database/scripts/device-provision.js \</p>
+<p>  --tenant=&lt;slug&gt; --station=&lt;uuid&gt;</p>
+<p>```</p>
+
+<hr/>
+
+<h2>6. Cost roll-up</h2>
+
+
+<figure class="diagram"><img src="file:///home/fsociety/weather-station/docs/_build/hardware-bom-svgs/diagram-04.png" alt="Diagram 04" /></figure>
+
+
+<p>Add **~$20** for BME680 (air quality + VOC), or **~$25** for a rain gauge (only if outdoors).</p>
+
+<hr/>
+
+<h2>7. Pre-purchase sanity checklist</h2>
+
+<p>- [ ] ESP32 board has a **USB-C** connector, not micro-USB</p>
+<p>- [ ] BME**280** (with humidity), not BME**P**280 — the spelling matters</p>
+<p>- [ ] USB-C cable is rated for **data**, not charge-only — many bundled cables won't enumerate the COM port for flashing</p>
+<p>- [ ] You have a USB-C wall adapter, OR you'll be powering the board off a laptop/hub during the prototype</p>
+<p>- [ ] Sensor modules say **3.3V** in the listing — some breakouts are 5V-only and will fry</p>
+
+<hr/>
+
+<h2>8. Phase 2 preview — outdoor / battery / solar (not yet)</h2>
+
+<p>When you're ready to put a station outdoors:</p>
+
+<table class="md-table">
+<tr><th>Add</th><th>Est. $</th><th>Why</th></tr>
+<tr><td>6V / 2W solar panel (ETFE)</td><td>$8 – $15</td><td>Charges the battery; sized for Tunis-latitude winter sun.</td></tr>
+<tr><td>TP4056 charging module with protection chip</td><td>$1 – $3</td><td>DW01 IC visible on board. Without protection, the cell over-discharges.</td></tr>
+<tr><td>18650 Li-ion cell (Samsung 25R / Panasonic NCR18650B)</td><td>$5 – $10</td><td>3000+ mAh real capacity. Avoid no-name "9999 mAh" listings.</td></tr>
+<tr><td>18650 battery holder (solder tab)</td><td>$1 – $3</td><td></td></tr>
+<tr><td>Schottky diode 1N5819 / SS14</td><td>$0.50</td><td>Between solar `+` and TP4056 `IN+` so the cell can't drain back through the panel at night.</td></tr>
+<tr><td>Voltage divider (2× 100kΩ resistors)</td><td>$0.10</td><td>Battery monitoring via ADC1 (GPIO 32). Reports `batteryVoltage` to the backend.</td></tr>
+<tr><td>IP65/66 weatherproof enclosure (~200×150×100)</td><td>$10 – $18</td><td>Polycarbonate; clear lid if you want to read the LEDs through it.</td></tr>
+<tr><td>Cable glands (PG7 / PG9)</td><td>$0.50</td><td>Waterproof cable entry — pointed downward always.</td></tr>
+<tr><td>Stevenson screen (radiation shield)</td><td>$0 – $40</td><td>DIY from stacked PVC drain couplings (~$8) or pre-made ($30–40). Skipping this puts your temperature reading +5°C in noon sun.</td></tr>
+<tr><td>Tipping-bucket rain gauge</td><td>$15 – $25</td><td>Reed-switch contact closure per ~0.28 mm of rain.</td></tr>
+</table>
+
+<p>Plus the firmware-side changes — deep sleep between publishes, ADC sampling for battery, ULP counter for rain pulses — which the Phase 1 firmware doesn't need.</p>
+
+<p>A Phase 2 station lands around **$120 all-in** and runs for years off the solar panel without intervention. Phase 1 covers the same data plane on the bench so you can ship the software first, harden the hardware later.</p>
+
+</body>
+</html>

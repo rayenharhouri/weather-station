@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WeatherHub Backend Architecture</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-center {
+      content: "WeatherHub Backend Architecture · " counter(page) " / " counter(pages);
+      font-family: "Inter", "Helvetica", sans-serif;
+      font-size: 8.5pt;
+      color: #6b7280;
+    }
+  }
+  @page :first { @bottom-center { content: none; } }
+
+  :root {
+    --ink: #0f172a;
+    --ink-soft: #334155;
+    --ink-mute: #64748b;
+    --border: #e2e8f0;
+    --accent: #1e40af;
+    --accent-soft: #dbeafe;
+    --warn: #b45309;
+    --success: #047857;
+    --bg-sub: #f8fafc;
+  }
+
+  html { font-family: "Inter", "Helvetica", "Arial", sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.55; }
+  body { margin: 0; }
+  h1, h2, h3, h4 { color: var(--ink); font-weight: 600; letter-spacing: -0.01em; margin: 0; page-break-after: avoid; }
+  h1 { font-size: 28pt; line-height: 1.1; }
+  h2 { font-size: 16pt; margin-top: 18pt; margin-bottom: 6pt; page-break-before: auto; }
+  h3 { font-size: 12pt; margin-top: 14pt; margin-bottom: 4pt; color: var(--ink-soft); }
+  h4 { font-size: 10.5pt; margin-top: 10pt; margin-bottom: 2pt; color: var(--ink-soft); }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.1em; font-size: 8pt; color: var(--ink-mute); font-weight: 600; page-break-after: avoid; }
+  p { margin: 6pt 0; }
+  ul, ol { margin: 4pt 0 8pt 0; padding-left: 16pt; }
+  li { margin: 2pt 0; }
+  code, .mono { font-family: "JetBrains Mono", "Menlo", "Consolas", monospace; font-size: 9pt; }
+  code { background: var(--bg-sub); padding: 1pt 4pt; border-radius: 3pt; color: var(--ink-soft); }
+  pre { background: var(--bg-sub); padding: 8pt 10pt; border-radius: 4pt; border: 1px solid var(--border); font-size: 8.5pt; line-height: 1.4; overflow-wrap: anywhere; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt 0; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 5pt 8pt; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--bg-sub); font-weight: 600; color: var(--ink-soft); font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.04em; }
+  /* eyebrow rule consolidated above */
+  .lead { font-size: 11pt; color: var(--ink-soft); }
+  .tag { display: inline-block; padding: 1pt 6pt; border-radius: 3pt; background: var(--accent-soft); color: var(--accent); font-size: 8pt; font-weight: 600; margin-right: 4pt; }
+  .callout { border-left: 3pt solid var(--accent); background: var(--bg-sub); padding: 8pt 10pt; margin: 8pt 0; border-radius: 0 3pt 3pt 0; page-break-inside: avoid; }
+  .callout.warn { border-color: var(--warn); }
+  .callout.success { border-color: var(--success); }
+
+  .page-break { page-break-after: always; }
+  .keep { page-break-inside: avoid; }
+
+  /* Cover page */
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .stack { display: flex; gap: 8pt; flex-wrap: wrap; margin-top: 32pt; }
+  .cover .stack .chip { display: inline-flex; align-items: center; gap: 6pt; padding: 4pt 9pt; border: 1px solid var(--border); border-radius: 999pt; font-size: 9pt; font-weight: 500; color: var(--ink-soft); background: white; }
+  .cover .stack .chip img { width: 12pt; height: 12pt; }
+  .cover .meta { margin-top: 28pt; color: var(--ink-mute); font-size: 9.5pt; }
+
+  /* Diagram — fixed coordinate grid: 520pt × 360pt. Nodes and SVG lines share it. */
+  .diagram-wrap { border: 1px solid var(--border); background: white; padding: 10pt; border-radius: 6pt; page-break-inside: avoid; }
+  .diagram { position: relative; width: 520pt; height: 360pt; margin: 0 auto; }
+  .diagram svg.lines { position: absolute; top: 0; left: 0; width: 520pt; height: 360pt; pointer-events: none; }
+  .node { position: absolute; box-sizing: border-box; background: white; border: 1.2pt solid var(--border); border-radius: 6pt; padding: 4pt 6pt; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .node .icon { width: 18pt; height: 18pt; }
+  .node .label { font-size: 7.5pt; font-weight: 600; color: var(--ink); margin-top: 2pt; line-height: 1.15; }
+  .node .sub { font-size: 6.5pt; color: var(--ink-mute); margin-top: 1pt; line-height: 1.2; }
+  .node.brand-nest { border-color: #E0234E; border-width: 1.4pt; }
+  .node.brand-pg { border-color: #4169E1; }
+  .node.brand-mqtt { border-color: #3C5280; }
+  .node.brand-esp { border-color: #E7352C; }
+  .node.brand-next { border-color: #0a0a0a; }
+  .node.brand-hedera { border-color: #94a3b8; border-style: dashed; }
+
+  .legend { margin-top: 8pt; display: flex; flex-wrap: wrap; gap: 12pt; font-size: 8pt; color: var(--ink-mute); }
+  .legend .swatch { display: inline-flex; align-items: center; gap: 5pt; }
+  .legend .swatch::before { content: ""; display: inline-block; width: 16pt; height: 2pt; background: currentColor; }
+
+  /* Inline stack icons in body text */
+  .ic { display: inline-block; vertical-align: -2pt; width: 11pt; height: 11pt; margin: 0 1pt; }
+</style>
+</head>
+<body>
+
+<!-- ─────────────────────── COVER ─────────────────────── -->
+<section class="cover">
+  <div class="eyebrow">Technical specification · v0.1</div>
+  <h1>WeatherHub Backend<br/>Architecture</h1>
+  <p class="lead" style="margin-top: 14pt; max-width: 110mm;">
+    Multi-tenant NestJS API and MQTT ingest worker serving real-time
+    environmental data from ESP32 weather stations across university campuses.
+    Each tenant is physically isolated in its own Postgres database;
+    devices, users, and data never cross tenant boundaries.
+  </p>
+
+  <div class="stack">
+    <span class="chip"><img src="icons/nestjs.svg" alt=""/> NestJS 10</span>
+    <span class="chip"><img src="icons/typescript.svg" alt=""/> TypeScript 5</span>
+    <span class="chip"><img src="icons/typeorm.svg" alt=""/> TypeORM 0.3</span>
+    <span class="chip"><img src="icons/postgresql.svg" alt=""/> Postgres 16 · TimescaleDB</span>
+    <span class="chip"><img src="icons/eclipsemosquitto.svg" alt=""/> Eclipse Mosquitto 2</span>
+    <span class="chip"><img src="icons/espressif.svg" alt=""/> Espressif ESP32</span>
+    <span class="chip"><img src="icons/jsonwebtokens.svg" alt=""/> JWT (HS256)</span>
+    <span class="chip"><img src="icons/docker.svg" alt=""/> Docker Compose</span>
+    <span class="chip"><img src="icons/hedera.svg" alt=""/> Hedera (Phase 2)</span>
+    <span class="chip"><img src="icons/nextdotjs.svg" alt=""/> Next.js 16 frontend</span>
+  </div>
+
+  <div class="meta">
+    Service: <code>weatherhub-backend</code> · Default port <code>:3001</code><br/>
+    Tenancy: database-per-tenant · Ingest: MQTT v3.1.1 (TLS-ready)<br/>
+    Tenant resolution: subdomain · <code>X-Tenant</code> header · JWT <code>tid</code> claim
+  </div>
+</section>
+
+<div class="page-break"></div>
+
+<!-- ─────────────────────── DIAGRAM ─────────────────────── -->
+<section>
+  <div class="eyebrow">Section 1</div>
+  <h2 style="margin-top: 4pt;">System overview</h2>
+  <p>
+    The diagram below shows how a single backend deployment serves multiple
+    independent universities. Each university is a <strong>tenant</strong>;
+    its devices publish to dedicated MQTT topics, its users authenticate
+    against its own user table, and its sensor readings live in a database
+    that no other tenant can reach.
+  </p>
+
+  <div class="diagram-wrap keep">
+    <div class="diagram">
+
+      <!-- All coordinates below live in a 520 × 360 grid (pt). SVG and absolute-
+           positioned nodes share that grid exactly. -->
+      <svg class="lines" viewBox="0 0 520 360" preserveAspectRatio="none">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+
+        <!-- ESP32 (right edge x≈92) → MQTT broker (left edge x=135, mid y=135) -->
+        <path d="M 92 50  C 115 50, 120 130, 135 130" stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+        <path d="M 92 115 L 135 135"                  stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+        <path d="M 92 180 C 115 180, 120 140, 135 140" stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+
+        <!-- MQTT (right edge x=220) → NestJS (left edge x=245, mid y=150) -->
+        <path d="M 220 135 L 245 150" stroke="#475569" stroke-width="1.4" fill="none" marker-end="url(#arr)"/>
+
+        <!-- NestJS (right edge x=365) → DB column (left edge x=395) -->
+        <path d="M 365 105 L 395 50"  stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+        <path d="M 365 130 L 395 110" stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+        <path d="M 365 165 L 395 170" stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+        <path d="M 365 195 L 395 230" stroke="#475569" stroke-width="1.2" fill="none" marker-end="url(#arr)"/>
+
+        <!-- Next.js (bottom y=42) → NestJS (top y=80) -->
+        <path d="M 305 42 L 305 78" stroke="#475569" stroke-width="1.4" fill="none" marker-end="url(#arr)"/>
+
+        <!-- NestJS (bottom y=222) → Hedera (top y=255) — stubbed -->
+        <path d="M 305 222 L 305 253" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="2.5 2.5" fill="none" marker-end="url(#arr-d)"/>
+
+        <!-- Edge labels -->
+        <text x="14"  y="13"  font-family="Helvetica" font-size="7" font-weight="600" fill="#64748b">DEVICES</text>
+        <text x="155" y="100" font-family="Helvetica" font-size="6.5" fill="#64748b">MQTT · TLS · device JWT</text>
+        <text x="155" y="172" font-family="Helvetica" font-size="6.5" fill="#64748b">publish tenants/{tid}/...</text>
+        <text x="227" y="125" font-family="Helvetica" font-size="6.5" fill="#64748b">subscribe</text>
+        <text x="310" y="62"  font-family="Helvetica" font-size="6.5" fill="#64748b">HTTPS · Bearer JWT</text>
+        <text x="310" y="72"  font-family="Helvetica" font-size="6.5" fill="#64748b">REST · SSE</text>
+        <text x="370" y="78"  font-family="Helvetica" font-size="6.5" fill="#64748b">registry lookup</text>
+        <text x="370" y="145" font-family="Helvetica" font-size="6.5" fill="#64748b">per-tenant DataSource</text>
+        <text x="310" y="242" font-family="Helvetica" font-size="6.5" fill="#94a3b8">anchor (Phase 2)</text>
+      </svg>
+
+      <!-- ─── Device column (left) ─── -->
+      <div class="node brand-esp" style="top: 22pt;  left: 0; width: 92pt;">
+        <img class="icon" src="icons/espressif.svg" alt=""/>
+        <div class="label">ESP32 · ENIT</div>
+        <div class="sub">device JWT · tid=enit</div>
+      </div>
+      <div class="node brand-esp" style="top: 88pt;  left: 0; width: 92pt;">
+        <img class="icon" src="icons/espressif.svg" alt=""/>
+        <div class="label">ESP32 · ESPRIT</div>
+        <div class="sub">device JWT · tid=esprit</div>
+      </div>
+      <div class="node brand-esp" style="top: 154pt; left: 0; width: 92pt;">
+        <img class="icon" src="icons/espressif.svg" alt=""/>
+        <div class="label">ESP32 · INSAT</div>
+        <div class="sub">device JWT · tid=insat</div>
+      </div>
+
+      <!-- ─── MQTT broker ─── -->
+      <div class="node brand-mqtt" style="top: 100pt; left: 135pt; width: 85pt; height: 70pt;">
+        <img class="icon" src="icons/eclipsemosquitto.svg" alt=""/>
+        <div class="label">Mosquitto MQTT</div>
+        <div class="sub">topic ACL by tid</div>
+      </div>
+
+      <!-- ─── NestJS backend (centre) ─── -->
+      <div class="node brand-nest" style="top: 78pt; left: 245pt; width: 120pt; height: 144pt;">
+        <img class="icon" src="icons/nestjs.svg" alt="" style="width:26pt; height:26pt;"/>
+        <div class="label" style="font-size:9pt; margin-top:4pt;">NestJS backend</div>
+        <div class="sub">API gateway + ingest worker</div>
+        <div class="sub" style="margin-top:6pt;">JWT verify · tenant resolver</div>
+        <div class="sub">REST + SSE</div>
+        <div class="sub">MQTT subscriber</div>
+      </div>
+
+      <!-- ─── Next.js frontend (above NestJS) ─── -->
+      <div class="node brand-next" style="top: 0; left: 245pt; width: 120pt; height: 42pt;">
+        <img class="icon" src="icons/nextdotjs.svg" alt=""/>
+        <div class="label">Next.js frontend</div>
+        <div class="sub">subdomain → tid</div>
+      </div>
+
+      <!-- ─── Hedera anchor (below NestJS, dashed) ─── -->
+      <div class="node brand-hedera" style="top: 253pt; left: 250pt; width: 110pt;">
+        <img class="icon" src="icons/hedera.svg" alt=""/>
+        <div class="label">Hedera anchor</div>
+        <div class="sub">Merkle root · stubbed</div>
+      </div>
+
+      <!-- ─── Database column (right) ─── -->
+      <div class="node brand-pg" style="top: 18pt;  left: 395pt; width: 122pt;">
+        <img class="icon" src="icons/postgresql.svg" alt=""/>
+        <div class="label">weatherhub_master</div>
+        <div class="sub">tenant registry only</div>
+      </div>
+      <div class="node brand-pg" style="top: 80pt;  left: 395pt; width: 122pt;">
+        <img class="icon" src="icons/postgresql.svg" alt=""/>
+        <div class="label">tenant_enit</div>
+        <div class="sub">TimescaleDB · ENIT data</div>
+      </div>
+      <div class="node brand-pg" style="top: 142pt; left: 395pt; width: 122pt;">
+        <img class="icon" src="icons/postgresql.svg" alt=""/>
+        <div class="label">tenant_esprit</div>
+        <div class="sub">TimescaleDB · ESPRIT data</div>
+      </div>
+      <div class="node brand-pg" style="top: 204pt; left: 395pt; width: 122pt;">
+        <img class="icon" src="icons/postgresql.svg" alt=""/>
+        <div class="label">tenant_insat</div>
+        <div class="sub">TimescaleDB · INSAT data</div>
+      </div>
+
+      <!-- Tenancy boundary label on DB column -->
+      <div style="position: absolute; top: 270pt; left: 395pt; width: 122pt; text-align: center; font-size: 6.5pt; color: var(--ink-mute);">
+        physically separate databases<br/>one per university
+      </div>
+
+    </div>
+    <div class="legend">
+      <span class="swatch" style="color:#475569;">Synchronous request / write</span>
+      <span class="swatch" style="color:#94a3b8;">Stubbed (Phase 2)</span>
+      <span style="color:var(--ink-mute);">All inter-service traffic is TLS-terminated at the edge in production.</span>
+    </div>
+  </div>
+</section>
+
+<!-- natural page flow -->
+
+<!-- ─────────────────────── TENANCY ─────────────────────── -->
+<section>
+  <div class="eyebrow">Section 2</div>
+  <h2 style="margin-top: 4pt;">Tenancy model</h2>
+  <p>
+    WeatherHub uses <strong>database-per-tenant (DPT)</strong>. Each
+    university gets a physical Postgres database named
+    <code>tenant_&lt;slug&gt;</code>. A separate <strong>master database</strong>
+    (<code>weatherhub_master</code>) holds only the tenant registry &mdash; never
+    sensor data, never users.
+  </p>
+
+  <h3>Why DPT and not row-level <code>tenant_id</code>?</h3>
+  <ul>
+    <li><strong>Data sovereignty.</strong> Universities frequently require that their data physically lives in a database they can audit, back up, or extract in isolation. Row-level isolation cannot offer the same guarantee.</li>
+    <li><strong>Blast radius.</strong> A bad query, leaked credential, or RLS policy mistake in a row-level model can leak every tenant. In DPT, those failures stay contained to one database.</li>
+    <li><strong>Lifecycle simplicity.</strong> "Delete this tenant" is a single <code>DROP DATABASE</code>. Backup, restore, and migration to a separate Postgres host are also trivial.</li>
+  </ul>
+
+  <h3>What lives where</h3>
+  <table>
+    <thead><tr><th>Database</th><th>Tables</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>weatherhub_master</code></td>
+        <td><code>tenants</code></td>
+        <td>Registry: slug, name, dbName, optional emailDomain, Hedera account, active flag.</td>
+      </tr>
+      <tr>
+        <td><code>tenant_enit</code><br/><span class="mono" style="color:var(--ink-mute)">(one per university)</span></td>
+        <td><code>users</code><br/><code>stations</code><br/><code>readings</code> (hypertable)<br/><span class="mono" style="color:var(--ink-mute);">+ future: alerts, forecasts, integrity_batches</span></td>
+        <td>Everything tenant-specific. <code>readings</code> is a TimescaleDB hypertable partitioned by <code>recordedAt</code> for efficient time-series queries and continuous aggregates.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Tenant resolution</h3>
+  <p>Three sources, evaluated in this order:</p>
+  <ol>
+    <li><strong>JWT <code>tid</code> claim.</strong> Authoritative for any authenticated request. Cannot be spoofed without the signing secret.</li>
+    <li><strong><code>X-Tenant</code> header.</strong> Used for tools, the login endpoint, and tests. Set explicitly by the caller.</li>
+    <li><strong>Host subdomain.</strong> <code>enit.weatherhub.local</code> → tenant <code>enit</code>. Convenient for browser sessions and per-tenant branding.</li>
+  </ol>
+  <p>
+    A <code>TenantContextMiddleware</code> populates <code>req.tenant</code> from
+    sources 2 and 3 before any guard runs. The <code>JwtStrategy</code> overrides
+    it from the <code>tid</code> claim on every authenticated route so an
+    attacker cannot mix a valid JWT for tenant A with a header for tenant B.
+  </p>
+
+  <h3>Tenant DataSources are pooled, lazy, and cached</h3>
+  <p>
+    <code>TenantService.getDataSource(slug)</code> returns a singleton TypeORM
+    <code>DataSource</code> per tenant. The first call to a given slug looks up
+    the connection string in master, opens the pool, and caches the
+    <code>DataSource</code> in memory. Subsequent calls reuse it. The service
+    closes every pool on application shutdown.
+  </p>
+
+  <div class="callout">
+    <strong>Operational consequence.</strong> Backend memory grows linearly
+    with the number of <em>active</em> tenants (each pool defaults to 10
+    connections). At thousands of tenants, switch to a connection-string
+    multiplexer (pgbouncer / RDS Proxy) rather than holding pools in-process.
+  </div>
+</section>
+
+<!-- natural page flow -->
+
+<!-- ─────────────────────── AUTH ─────────────────────── -->
+<section>
+  <div class="eyebrow">Section 3</div>
+  <h2 style="margin-top: 4pt;">Authentication &amp; request flow</h2>
+
+  <h3>Login</h3>
+  <ol>
+    <li><strong>Resolve tenant.</strong> If <code>req.tenant</code> is set by middleware, use it. Otherwise look up the tenant by the email's domain (<code>chiheb@enit.utm.tn</code> → tenant <code>enit</code>). If neither succeeds, return <code>400</code>.</li>
+    <li><strong>Open the tenant's DataSource</strong> and read the user by email.</li>
+    <li><strong>Bcrypt-compare</strong> the supplied password against <code>passwordHash</code>. Wrong password and unknown user return the same generic <code>401</code> message — no user enumeration.</li>
+    <li><strong>Update <code>lastLoginAt</code></strong>.</li>
+    <li><strong>Issue a JWT</strong> with payload <code>{ sub, tid, email }</code>, signed HS256 with <code>JWT_SECRET</code>. Default expiry 24 h.</li>
+  </ol>
+
+  <h3>JWT payload</h3>
+  <pre>{
+  "sub":   "&lt;user uuid&gt;",
+  "tid":   "&lt;tenant slug&gt;",       <span style="color:var(--ink-mute);">// authoritative on every authenticated request</span>
+  "email": "chiheb@enit.utm.tn",
+  "iat":   1778776080,
+  "exp":   1778862480
+}</pre>
+
+  <h3>Every authenticated request</h3>
+  <ol>
+    <li><strong>JWT extracted</strong> from <code>Authorization: Bearer …</code> header. The <code>JwtStrategy</code> also accepts <code>?token=&lt;jwt&gt;</code> as a fallback so browser <code>EventSource</code> (SSE) can authenticate without setting headers.</li>
+    <li><strong>Signature verified.</strong> If <code>tid</code> or <code>sub</code> is missing or malformed → <code>401</code>.</li>
+    <li><strong>Tenant re-resolved</strong> from the <code>tid</code> claim. Inactive tenants → <code>401</code>.</li>
+    <li><strong>User reloaded from the tenant DB</strong>. Immediate revocation works: deleting or disabling the user invalidates the token on the next request.</li>
+    <li><strong><code>req.user</code> and <code>req.tenant</code></strong> are populated for handlers and decorators.</li>
+  </ol>
+
+  <h3>Roles</h3>
+  <p>
+    Each user has a role: <code>admin</code>, <code>researcher</code>, or
+    <code>viewer</code>. The role lives in the tenant DB so it can be revoked
+    or upgraded without re-issuing JWTs. Route-level authorization will be
+    added in the alerts phase via a <code>@Roles(...)</code> decorator on top
+    of <code>JwtAuthGuard</code>.
+  </p>
+</section>
+
+<!-- natural page flow -->
+
+<!-- ─────────────────────── INGEST ─────────────────────── -->
+<section>
+  <div class="eyebrow">Section 4</div>
+  <h2 style="margin-top: 4pt;">Ingest path (ESP32 → tenant DB → SSE)</h2>
+
+  <h3>1. Device → MQTT</h3>
+  <p>
+    Each ESP32 holds a long-lived <strong>device JWT</strong> (separate signing
+    secret from user JWTs) carrying <code>{ deviceId, stationId, tid }</code>.
+    The device authenticates to Mosquitto by placing the JWT in the MQTT
+    <em>username</em> and <em>password</em> fields. The broker's ACL
+    enforces that the device may only publish to topics whose
+    <code>tid</code> segment matches the token's <code>tid</code> claim.
+  </p>
+  <pre>topic:   tenants/{tid}/stations/{sid}/readings
+payload: { "recordedAt": "...", "temperatureC": 24.5, "humidityPct": 55, ... }</pre>
+
+  <h3>2. MQTT → NestJS ingest worker</h3>
+  <p>
+    A NestJS worker subscribes with the wildcard pattern
+    <code>tenants/+/stations/+/readings</code>. For every message it:
+  </p>
+  <ol>
+    <li>Re-verifies the device JWT signature.</li>
+    <li>Validates the payload against the <code>IngestReadingDto</code> schema (same validation used by the manual <code>POST /readings</code> path).</li>
+    <li>Resolves the tenant DataSource for <code>tid</code>.</li>
+    <li>Inserts into the tenant's <code>readings</code> hypertable.</li>
+    <li>Updates the station's <code>lastSyncedAt</code> and <code>status</code> via <code>StationsService.touchLastSync()</code>.</li>
+    <li>Publishes to the in-memory SSE channel keyed by <code>(tenantSlug, stationId)</code>.</li>
+  </ol>
+
+  <div class="callout warn">
+    <strong>Phase status.</strong> The MQTT subscriber itself is not yet implemented.
+    The data path above is exercised today via the <code>POST /readings</code>
+    REST endpoint (admin-authenticated), which calls the same
+    <code>ReadingsService.ingest()</code> method the MQTT worker will use.
+  </div>
+
+  <h3>3. SSE fan-out</h3>
+  <p>
+    <code>ReadingsStreamService</code> maintains a <code>Map&lt;tenantSlug:stationId,
+    Subject&gt;</code>. When a reading is persisted, all browser clients
+    subscribed to that station receive it on their open SSE connection within
+    a single round-trip. The frontend's <code>useSSEStream</code> hook reconnects
+    automatically on failure.
+  </p>
+
+  <div class="callout">
+    <strong>Scaling note.</strong> The subscriber registry is in-process. Two
+    backend replicas would each see only the clients connected to them. Once
+    horizontal scaling is needed, replace the in-memory map with a Redis
+    or NATS pub/sub adapter behind the same <code>ReadingsStreamService</code>
+    interface.
+  </div>
+</section>
+
+<!-- natural page flow -->
+
+<!-- ─────────────────────── DATA + OPS ─────────────────────── -->
+<section>
+  <div class="eyebrow">Section 5</div>
+  <h2 style="margin-top: 4pt;">Data model</h2>
+
+  <h3>Master DB · <code>tenants</code></h3>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>uuid PK</td><td></td></tr>
+      <tr><td><code>slug</code></td><td>varchar(64), unique</td><td>URL-safe identifier (<code>enit</code>, <code>esprit</code>...).</td></tr>
+      <tr><td><code>name</code></td><td>varchar(200)</td><td>Display name.</td></tr>
+      <tr><td><code>location</code></td><td>varchar(200), nullable</td><td></td></tr>
+      <tr><td><code>emailDomain</code></td><td>varchar(128), unique partial</td><td>Enables tenant resolution by email.</td></tr>
+      <tr><td><code>dbName</code></td><td>varchar(128)</td><td>Physical Postgres database name.</td></tr>
+      <tr><td><code>hederaAccountId</code></td><td>varchar(64), nullable</td><td>Reserved for Phase 2 anchoring.</td></tr>
+      <tr><td><code>active</code></td><td>boolean</td><td>Soft-deactivation flag.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Tenant DB · core tables</h3>
+  <table>
+    <thead><tr><th>Table</th><th>Shape</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>users</code></td>
+        <td>uuid PK · email (unique) · passwordHash · role · lastLoginAt</td>
+        <td>Lives inside the tenant DB &mdash; no shared user pool.</td>
+      </tr>
+      <tr>
+        <td><code>stations</code></td>
+        <td>uuid PK · name · location · lat/long · status · lastSyncedAt · enabledSensors[]</td>
+        <td><code>enabledSensors</code> is a Postgres text[]; values come from a closed set in the entity.</td>
+      </tr>
+      <tr>
+        <td><code>readings</code></td>
+        <td>composite PK (id, recordedAt) · stationId · per-metric columns · receivedAt</td>
+        <td>TimescaleDB hypertable. Aggregations use <code>time_bucket()</code> for 5m/15m/1h/1d intervals.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Migrations</h3>
+  <p>
+    Two migration sets are tracked separately: master migrations in
+    <code>migrations/master/</code> apply once; tenant migrations in
+    <code>migrations/tenant/</code> must be applied to every tenant database.
+    The <code>tenant:migrate</code> CLI iterates the registry and runs pending
+    migrations on each active tenant. The <code>tenant:provision</code> CLI
+    creates a new database, installs <code>timescaledb</code> and
+    <code>uuid-ossp</code> extensions, applies tenant migrations, and seeds an
+    admin user in one shot.
+  </p>
+
+  <h3 style="margin-top: 14pt;">Operational checklist before exposing to the internet</h3>
+  <ul>
+    <li><strong>JWT secrets.</strong> Replace <code>.env</code> placeholders with <code>openssl rand -base64 48</code>; rotate via a key-ID claim if you need overlap.</li>
+    <li><strong>Mosquitto auth.</strong> Switch <code>allow_anonymous false</code>, ship a <code>passwd</code> file and ACL list mapping device tokens to per-tenant topic patterns. Terminate TLS on <code>:8883</code>.</li>
+    <li><strong>Postgres roles.</strong> The application user only needs <code>CONNECT</code> + table CRUD on its tenant DB; <code>CREATE DATABASE</code> should be reserved for a separate provisioning role.</li>
+    <li><strong>Backups.</strong> One <code>pg_dump</code> per tenant DB; the registry must be backed up <em>before</em> tenant DBs so a restore preserves referential integrity.</li>
+    <li><strong>Observability.</strong> Add the <code>tid</code> as a structured log field on every request — without it, multi-tenant logs are unreadable.</li>
+    <li><strong>Rate limiting.</strong> Apply per-tenant and per-device limits at the edge (broker + API gateway), not in the NestJS process.</li>
+  </ul>
+
+  <div class="callout success">
+    <strong>What works today.</strong> Tenant provisioning, login &amp;
+    <code>/auth/me</code>, stations + readings REST, <code>time_bucket()</code>
+    aggregation, manual <code>POST /readings</code> ingestion, and SSE live
+    streaming. The frontend can run against this backend by flipping
+    <code>NEXT_PUBLIC_USE_MOCK_DATA=false</code>.
+  </div>
+
+  <div class="callout warn">
+    <strong>Not yet wired.</strong> MQTT subscriber, alerts evaluator + ack/resolve,
+    forecast scheduler, Hedera anchoring. Each is an additive module: no
+    changes to tenancy, auth, or storage are required to land them.
+  </div>
+</section>
+
+</body>
+</html>

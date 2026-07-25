@@ -1,0 +1,35 @@
+New scope for the same conversation. We've been designing the operations surface (dashboard / live / analytics / forecasts) and that work is going well — keep the same flow and the same visual language for this one too.
+
+
+# New surface: Researcher API portal
+
+WeatherHub is a university research project at heart. The pages we've been designing are the operations surface — for admins and viewers monitoring stations day-to-day.
+
+I also need a separate surface for researchers — academics at ENIT / ESPRIT / INSAT who want programmatic data access for their analysis and papers. Conceptually: "WeatherHub Console" (ops) vs "WeatherHub for Research" (data + APIs). Different mental model, different chrome, different default landing page. Researchers shouldn't see the alerts panel; admins shouldn't see the API console.
+
+
+# What it includes
+
+- API tokens — generate, name, expire, revoke per researcher
+- Endpoint documentation — every REST route + the SSE stream, with auth, params, and example payloads
+- Query playground — pick a station / metric / time range / interval, see the response inline, copy as curl / Python / R
+- Bulk export — CSV, JSON, maybe Parquet; sync for small queries, async for large
+- Per-token usage and rate-limit visibility
+- Possibly: dataset citation strings / DOIs, public sample data, cross-tenant access for multi-campus studies
+
+
+# Carry over everything we've locked
+
+
+The researcher portal inherits all of this. What changes is structure and information architecture, not the visual language.
+
+
+# Direction
+
+Same flow we've been in — ask what you need to know that isn't obvious, then propose. The questions I'd start with if I were you:
+
+- Separation: subdomain (research.weatherhub.local) or route prefix (/research)? YES
+- Default landing page: docs / playground / token management / dataset catalog? YES
+- The "researcher" role already exists in our users table — distinct role or additive capability anyone can have? seperate
+
+Once you've got the direction, give me the same per-page treatment you've been doing: written layout description + ASCII wireframe (desktop + mobile), code only after I sign off on the description. Start with whatever you think the canonical entry page is.
