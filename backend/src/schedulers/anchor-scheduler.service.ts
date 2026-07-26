@@ -9,17 +9,6 @@ import { StationsService } from '../stations/stations.service';
 import { IntegrityService } from '../integrity/integrity.service';
 import { TenantService } from '../tenancy/tenant.service';
 
-/**
- * Periodic anchor worker.
- *
- * For each active tenant × station, calls `IntegrityService.createBatch()`
- * which collects all readings newer than the previous batch's
- * `timeWindowEnd`, computes a Merkle root, and anchors it via the Hedera
- * adapter (still stubbed deterministically — see [hedera-anchor.service.ts](../integrity/hedera-anchor.service.ts)).
- *
- * Skipped in `test` mode. Default cadence: 5 minutes. Set
- * `ANCHOR_SCHEDULER_TICK_MS=0` to disable.
- */
 @Injectable()
 export class AnchorSchedulerService implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(AnchorSchedulerService.name);

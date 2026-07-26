@@ -24,10 +24,6 @@ export type V1Metric = (typeof V1_METRICS)[number];
 export const V1_INTERVALS = ['raw', '5m', '15m', '1h', '1d'] as const;
 export type V1Interval = (typeof V1_INTERVALS)[number];
 
-/**
- * Query shape for `GET /v1/readings`. Matches the public docs page exactly so
- * the SDK + curl examples there map 1:1 to what we accept.
- */
 export class V1ReadingsQueryDto {
   @IsString()
   station!: string;

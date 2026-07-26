@@ -34,19 +34,6 @@ import {
   generateMockIntegrityBatches,
 } from '@/lib/mock-data';
 
-/**
- * Mode-aware wrapper around a backend call. Behaviour per `config.mode`:
- *
- *   production : `apiFn()` only. Errors bubble up. No mocks.
- *   demo       : try `apiFn()` first; on failure fall back to mockData,
- *                logging a warning. If `apiFn` never even gets to run
- *                (e.g. no backend), mockData is returned with a small
- *                latency to keep the UI honest.
- *   test       : mocks only; no network, no artificial latency.
- *
- * The `mockData` argument is now lazy (a function), so test/demo mode never
- * pays the cost of generating it when the live call succeeded in demo.
- */
 const withMockFallback = async <T,>(
   apiFn: () => Promise<T>,
   mockData: T | (() => T),
@@ -63,11 +50,9 @@ const withMockFallback = async <T,>(
     return apiFn();
   }
 
-  // demo: prefer the live call, fall back to mock on failure.
   try {
     return await apiFn();
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.warn(
       `[demo] ${endpointName} failed, falling back to mock data:`,
       error instanceof Error ? error.message : error,
@@ -79,7 +64,6 @@ const withMockFallback = async <T,>(
   }
 };
 
-// Auth Services
 export const authService = {
   async login(email: string, password: string) {
     return withMockFallback(
@@ -110,9 +94,6 @@ export const authService = {
   },
 };
 
-// Operations Settings — JWT-auth `/settings/preferences`. Reads/writes the
-// same per-user row that `/v1/account` does (account_preferences) but on a
-// different projection: ops notification toggles + alert thresholds.
 export type OpsNotificationPrefs = {
   alertsEmail: boolean;
   dailyReport: boolean;
@@ -146,7 +127,6 @@ export const settingsService = {
   },
 };
 
-// Station Services
 export const stationService = {
   async getAll() {
     return withMockFallback(
@@ -178,7 +158,6 @@ export const stationService = {
   },
 };
 
-// Reading Services  
 export const readingService = {
   async getLatest(stationId: string) {
     return withMockFallback(
@@ -259,7 +238,6 @@ export const readingService = {
   },
 };
 
-// Forecast Services
 export const forecastService = {
   async getForecasts(stationId: string, horizon?: string) {
     return withMockFallback(
@@ -275,7 +253,6 @@ export const forecastService = {
   },
 };
 
-// Alert Services
 export const alertService = {
   async getAlerts(params?: { stationId?: string; status?: string; severity?: string; from?: string; to?: string }) {
     return withMockFallback(
@@ -329,7 +306,6 @@ export const alertService = {
   },
 };
 
-// Integrity Services
 export const integrityService = {
   async getBatches(params?: { stationId?: string; from?: string; to?: string }) {
     return withMockFallback(
@@ -402,9 +378,6 @@ export const integrityService = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────
-// Token Services (research portal)
-// ─────────────────────────────────────────────────────────────
 export type ApiTokenResource = z.infer<typeof ApiTokenSchema>;
 export type CreateTokenInput = {
   name: string;
@@ -514,14 +487,6 @@ export const tokenService = {
     );
   },
 };
-
-// ─────────────────────────────────────────────────────────────
-// /v1/* services — authenticated with the *active API token*
-// (not the user JWT). All wrap `v1ApiClient`. Backend returns
-// snake_case in `{ data, next_cursor? }` envelopes; we unwrap
-// and translate field-by-field at the boundary so callers
-// don't need to know about the wire format.
-// ─────────────────────────────────────────────────────────────
 
 export type DatasetResource = {
   id: string;
@@ -717,11 +682,6 @@ export const exportService = {
     return `${config.apiUrl}/v1/exports/${id}/download`;
   },
 
-  /**
-   * Stream the export file as a Blob, using the active API token from
-   * `localStorage` as the bearer. Browsers can't set an `Authorization`
-   * header on a plain anchor click, so we fetch + blob-url + click instead.
-   */
   async downloadBlob(id: string): Promise<Blob> {
     const token =
       typeof window !== 'undefined'

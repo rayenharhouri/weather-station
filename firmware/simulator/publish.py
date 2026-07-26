@@ -1,27 +1,4 @@
 #!/usr/bin/env python3
-"""
-WeatherHub MQTT publisher — software simulator of an ESP32 station.
-
-Lets you smoke-test the backend end-to-end (ingest worker → tenant DB →
-SSE → dashboard) without waiting on a physical device. Reads the same
-config values the firmware does (tenant slug, station UUID, device JWT,
-broker host), then publishes a synthetic reading every N seconds.
-
-Install:
-
-    pip install paho-mqtt
-
-Run (one-shot single reading):
-
-    python publish.py --once
-
-Run (every 30s until you Ctrl-C):
-
-    python publish.py --interval=30
-
-All flags are optional — defaults are read from the env first, then the
-in-file defaults below.
-"""
 from __future__ import annotations
 
 import argparse
@@ -38,7 +15,6 @@ try:
 except ImportError:
     sys.exit("missing dep: pip install paho-mqtt")
 
-# ─── Defaults — override via env or CLI ──────────────────────────────
 DEFAULT_HOST      = os.environ.get("WH_MQTT_HOST", "localhost")
 DEFAULT_PORT      = int(os.environ.get("WH_MQTT_PORT", "1883"))
 DEFAULT_USER      = os.environ.get("WH_MQTT_USER", "ingest-worker")
@@ -53,8 +29,6 @@ def iso_now() -> str:
 
 
 def build_reading(start_temp: float = 22.0) -> dict:
-    """A synthetic-but-plausible reading. Uses a noisy daily sinusoid so the
-    dashboard sparklines have something realistic to draw."""
     hour = datetime.now(timezone.utc).hour + datetime.now(timezone.utc).minute / 60.0
     temp_base = 18.0 + 8.0 * math.sin((hour - 8) * math.pi / 12)
     humidity_base = 65.0 - 25.0 * math.sin((hour - 8) * math.pi / 12)
@@ -78,7 +52,6 @@ def publish_one(client: mqtt.Client, topic: str, jwt: str) -> None:
     if info.rc != mqtt.MQTT_ERR_SUCCESS:
         print(f"[publish] FAILED · rc={info.rc}")
     else:
-        # Trim payload preview to keep the terminal readable.
         snippet = body[:80] + ("…" if len(body) > 80 else "")
         print(f"[publish] {topic} · {snippet}")
 
@@ -108,8 +81,6 @@ def main() -> None:
 
     topic = f"tenants/{args.tenant}/stations/{args.station}/readings"
 
-    # paho-mqtt 2.x split the client API on protocol version — opt in to
-    # CallbackAPIVersion.VERSION2 if available, otherwise fall back.
     try:
         client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,

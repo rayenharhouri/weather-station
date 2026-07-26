@@ -7,31 +7,17 @@ export interface MultiMetricSeries {
   label: string;
   color: string;
   unit: string;
-  /** Y-value per shared X index. Use `null` for missing samples. */
   values: Array<number | null>;
-  /** Number of decimals to render in the value column. */
   decimals?: number;
 }
 
 interface MultiMetricChartProps {
-  /** Time labels shared by every series. Length must match series[i].values.length. */
   timestamps: string[];
   series: MultiMetricSeries[];
-  /** Height of each metric row, in px. Default 80. */
   rowHeight?: number;
-  /** Pixel padding inside each chart cell. */
   pad?: number;
 }
 
-/**
- * Small-multiples line chart — one row per metric, shared X axis at the bottom,
- * shared hover playhead across every row.
- *
- * Each row is its own SVG so per-metric mins/maxes scale independently (a
- * humidity range of 30–90 doesn't crush a temperature range of 18–26). The
- * playhead state lives at this level so a pointer on the temperature chart
- * also marks the same X on humidity, pressure, etc.
- */
 export function MultiMetricChart({
   timestamps,
   series,
@@ -107,7 +93,6 @@ function SeriesRow({
     [onHover, totalPoints],
   );
 
-  // Resolve which value to render in the right-hand column.
   const hovered = hoverIndex != null && hoverIndex >= 0 && hoverIndex < vals.length
     ? vals[hoverIndex]
     : null;
@@ -191,7 +176,6 @@ function ChartSvg({
   const yOf = (v: number) => pad + (1 - (v - min) / range) * (height - pad * 2);
   const xOf = (i: number) => pad + i * step;
 
-  // Build line segments — break the path on null gaps.
   const segments: string[] = [];
   let currentSeg: string[] = [];
   values.forEach((v, i) => {
@@ -208,12 +192,10 @@ function ChartSvg({
   });
   if (currentSeg.length) segments.push(currentSeg.join(' '));
 
-  // Last non-null point
   let lastIdx = values.length - 1;
   while (lastIdx >= 0 && values[lastIdx] == null) lastIdx--;
   const lastPoint = lastIdx >= 0 ? [xOf(lastIdx), yOf(values[lastIdx] as number)] : null;
 
-  // Hover crosshair + dot
   const hoverValue =
     hoverIndex != null && hoverIndex >= 0 && hoverIndex < values.length
       ? values[hoverIndex]

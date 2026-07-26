@@ -27,11 +27,6 @@ const TABS: Array<{ value: Tab; label: string }> = [
 
 const QUERY_KEY = ['research', 'tokens'] as const;
 
-/**
- * Maps the API resource shape onto the UI ApiToken type. They're kept
- * separate so adding server-only fields (userId, revokedAt, etc.) doesn't
- * leak into the UI.
- */
 function toUiToken(resource: ApiTokenResource): ApiToken {
   return {
     id: resource.id,
@@ -93,16 +88,10 @@ export default function TokensPage() {
   };
 
   const handleRotate = (id: string) => {
-    // For v1: revoke then reopen the create dialog so the user picks the
-    // replacement name + scope. A real rotate-in-place could short-circuit
-    // through `tokenService.rotate(id)` here once the dialog supports the flow.
     revokeMutation.mutate(id);
     setNewOpen(true);
   };
 
-  // After the reveal phase closes, refetch so the list reconciles with the
-  // server-issued token (id, scope, expiresAt). The dialog already showed
-  // the plaintext during the one-shot reveal.
   const handleCreated = () => {
     void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
   };

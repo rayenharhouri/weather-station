@@ -1,11 +1,9 @@
-// Role-based permissions
 export const ROLE_PERMISSIONS = {
   admin: ['view', 'edit', 'delete', 'manage_alerts', 'manage_users', 'export'],
   researcher: ['view', 'edit', 'export', 'manage_own_alerts'],
   viewer: ['view'],
 } as const;
 
-// Metric configurations
 export const METRIC_CONFIG = {
   temperature: {
     label: 'Temperature',
@@ -45,7 +43,6 @@ export const METRIC_CONFIG = {
   },
 } as const;
 
-// Alert severity colors
 export const SEVERITY_CONFIG = {
   info: {
     label: 'Info',
@@ -64,7 +61,6 @@ export const SEVERITY_CONFIG = {
   },
 } as const;
 
-// Alert status colors
 export const STATUS_CONFIG = {
   open: {
     label: 'Open',
@@ -80,7 +76,6 @@ export const STATUS_CONFIG = {
   },
 } as const;
 
-// Station status colors
 export const STATION_STATUS_CONFIG = {
   online: {
     label: 'Online',
@@ -99,7 +94,6 @@ export const STATION_STATUS_CONFIG = {
   },
 } as const;
 
-// Signal strength indicators
 export const SIGNAL_STRENGTH_CONFIG = {
   excellent: {
     label: 'Excellent',
@@ -128,7 +122,6 @@ export const SIGNAL_STRENGTH_CONFIG = {
   },
 } as const;
 
-// Time range options
 export const TIME_RANGES = [
   { label: 'Last 24 hours', value: '24h', ms: 24 * 60 * 60 * 1000 },
   { label: 'Last 7 days', value: '7d', ms: 7 * 24 * 60 * 60 * 1000 },
@@ -136,7 +129,6 @@ export const TIME_RANGES = [
   { label: 'Last 90 days', value: '90d', ms: 90 * 24 * 60 * 60 * 1000 },
 ] as const;
 
-// Forecast horizons
 export const FORECAST_HORIZONS = [
   { label: '1 hour', value: '1h' },
   { label: '3 hours', value: '3h' },
@@ -144,7 +136,6 @@ export const FORECAST_HORIZONS = [
   { label: '24 hours', value: '24h' },
 ] as const;
 
-// Aggregation intervals
 export const AGGREGATION_INTERVALS = [
   { label: 'Raw', value: 'raw' },
   { label: '5 minutes', value: '5m' },
@@ -153,20 +144,16 @@ export const AGGREGATION_INTERVALS = [
   { label: '1 day', value: '1d' },
 ] as const;
 
-// Default pagination
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
-// API Request defaults
 export const API_TIMEOUT = 30000; // 30 seconds
 export const RETRY_ATTEMPTS = 3;
 export const RETRY_DELAY = 1000; // 1 second
 
-// SSE Configuration
 export const SSE_RETRY_INTERVAL = 5000; // 5 seconds
 export const SSE_HEARTBEAT_TIMEOUT = 30000; // 30 seconds
 
-// Local Storage Keys
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'weather_station_auth_token',
   USER_PREFERENCES: 'weather_station_user_preferences',
@@ -174,7 +161,6 @@ export const STORAGE_KEYS = {
   SIDEBAR_OPEN: 'weather_station_sidebar_open',
 } as const;
 
-// Cache duration (in milliseconds)
 export const CACHE_DURATION = {
   STATIONS: 5 * 60 * 1000, // 5 minutes
   READINGS_LATEST: 30 * 1000, // 30 seconds (short due to live updates)
@@ -185,7 +171,6 @@ export const CACHE_DURATION = {
   USER: 30 * 60 * 1000, // 30 minutes
 } as const;
 
-// Empty state messages
 export const EMPTY_STATES = {
   NO_READINGS: "No weather readings available yet. The station may still be collecting data.",
   NO_ALERTS: "No alerts at this time. Your campus is operating normally.",
@@ -194,7 +179,6 @@ export const EMPTY_STATES = {
   NO_STATIONS: "No weather stations configured. Please contact your administrator.",
 } as const;
 
-// System messages
 export const SYSTEM_MESSAGES = {
   OFFLINE: "System is currently offline. Operating in local mode with cached data.",
   DISCONNECTED: "Connection lost to the live data stream. Reconnecting...",
@@ -204,7 +188,6 @@ export const SYSTEM_MESSAGES = {
   ERROR_SAVING: "Failed to save changes. Please try again.",
 } as const;
 
-// Verification status labels
 export const VERIFICATION_STATUS = {
   VERIFIED: "Verified on Hedera",
   PENDING: "Pending verification",

@@ -1,15 +1,3 @@
-/**
- * Unit tests for HederaAnchorService — no network, no real testnet account.
- * `@hashgraph/sdk` is mocked so we can pin down three behaviours without
- * live credentials:
- *
- *  1. Stub path (disabled, or enabled without creds) is deterministic and
- *     always honestly tagged `simulated: true` / `mirrorNodeVerified: false`.
- *  2. Live path calls the SDK with the right shape and returns
- *     `simulated: false`, creating a topic first when none is configured.
- *  3. Any failure in the live path falls back to the stub rather than
- *     throwing, and the client is always closed.
- */
 const topicCreateExecute = jest.fn();
 const topicSubmitExecute = jest.fn();
 const setOperatorMock = jest.fn();
@@ -163,8 +151,6 @@ describe('HederaAnchorService', () => {
       const svc = new HederaAnchorService(new FakeConfigService(liveConfig) as any);
       const result = await svc.submitRoot('acme', ROOT);
 
-      // The submit itself succeeded; only the best-effort mirror check
-      // failed, so this should still be a real (non-simulated) anchor.
       expect(result.simulated).toBe(false);
       expect(result.mirrorNodeVerified).toBe(false);
     });

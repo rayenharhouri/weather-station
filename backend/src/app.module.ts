@@ -71,8 +71,6 @@ import { RequestLoggerMiddleware } from './observability/request-logger.middlewa
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    // RequestLogger first so it captures the start time before any other
-    // middleware (incl. tenant resolution) adds latency to the measurement.
     consumer.apply(RequestLoggerMiddleware, TenantContextMiddleware).forRoutes('*');
   }
 }

@@ -50,7 +50,6 @@ export function AlertDetailPanel({
   const color = METRIC_COLORS[alert.metric] ?? 'var(--fg-muted)';
   const readingField = READING_FIELD_BY_METRIC[alert.metric];
 
-  // Pull a 30-min window around the trigger time so we can show the breach in context.
   const triggeredMs = new Date(alert.triggeredAt).valueOf();
   const from = new Date(triggeredMs - 30 * 60 * 1000).toISOString();
   const to = new Date(Math.min(Date.now(), triggeredMs + 30 * 60 * 1000)).toISOString();

@@ -1,24 +1,5 @@
-/**
- * Mode-branch tests for the service layer.
- *
- * The goal is to pin down `withMockFallback`'s three modes:
- *   - production : call the real api; on failure, the error bubbles up.
- *   - demo       : call the real api; on failure, fall back to mock data.
- *   - test       : never call the api; always return mock data immediately.
- *
- * We don't test individual services exhaustively — instead we exercise
- * `stationService.getAll()` as a representative case, since every service
- * funnels through the same `withMockFallback`.
- */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-// ─── Mocks ──────────────────────────────────────────────────────────────
-// `services/api.ts` reads `config.mode` at module load to decide which
-// branch to take inside `withMockFallback`. We mock the config module
-// before importing the service so each test can set its own mode.
-//
-// `apiClient` is mocked so we never make real network calls.
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -60,7 +41,6 @@ vi.mock('@/lib/config', () => ({
   isTestMode: () => configState.mode === 'test',
 }));
 
-// Import the service AFTER mocks are registered so it sees the mocked deps.
 import { apiClient } from '@/lib/api-client';
 import { stationService } from './api';
 
@@ -71,7 +51,6 @@ beforeEach(() => {
 });
 
 describe('withMockFallback', () => {
-  // ─── production ──────────────────────────────────────────────────
   describe('production mode', () => {
     beforeEach(() => {
       configState.mode = 'production';
@@ -115,7 +94,6 @@ describe('withMockFallback', () => {
     });
   });
 
-  // ─── demo ────────────────────────────────────────────────────────
   describe('demo mode', () => {
     beforeEach(() => {
       configState.mode = 'demo';
@@ -150,8 +128,6 @@ describe('withMockFallback', () => {
     });
 
     it('falls back to mock data when the real api fails', async () => {
-      // Silence the `[demo] … falling back to mock data` warning so the
-      // test output stays clean.
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
       getMock.mockRejectedValueOnce(new Error('connection refused'));
@@ -165,7 +141,6 @@ describe('withMockFallback', () => {
     });
   });
 
-  // ─── test ────────────────────────────────────────────────────────
   describe('test mode', () => {
     beforeEach(() => {
       configState.mode = 'test';
@@ -179,12 +154,10 @@ describe('withMockFallback', () => {
     });
 
     it('does not delay the response (mockDataDelay clamped to 0)', async () => {
-      // Set a non-zero delay; in test mode the wrapper should ignore it.
       configState.mockDataDelay = 500;
       const startedAt = Date.now();
       await stationService.getAll();
       const elapsed = Date.now() - startedAt;
-      // 50ms wiggle room for the event loop on a slow CI runner.
       expect(elapsed).toBeLessThan(50);
       configState.mockDataDelay = 0;
     });

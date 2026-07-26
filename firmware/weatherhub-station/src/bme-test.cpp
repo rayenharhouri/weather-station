@@ -1,31 +1,11 @@
-/*
- * WeatherHub ESP32-S3 — BME280 standalone test.
- *
- * Isolates just the BME280 on the external sensor bus so a failure can
- * only mean wiring / address strapping / a dead sensor — nothing else
- * (BH1750, rain gauge, OLED, WiFi) is in the loop yet.
- *
- * Wiring (per the WeatherHub wiring schema — see sanity.cpp):
- *
- *   BME280 VCC  -> 3V3
- *   BME280 GND  -> GND
- *   BME280 SDA  -> GPIO 41
- *   BME280 SCL  -> GPIO 42
- *   BME280 CS   -> 3V3   (forces I2C mode instead of SPI)
- *   BME280 ADDR -> GND   (selects 0x76; float or tie to 3V3 for 0x77)
- *
- *   pio run -e bme-test -t upload
- *   pio device monitor
- */
 
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BME280.h>
 
-// ─── Pinout — external sensor bus (Wire1), matches sanity.cpp ──────
 static constexpr uint8_t SENSOR_SDA = 41;
 static constexpr uint8_t SENSOR_SCL = 42;
-static constexpr uint32_t SENSOR_I2C_HZ = 100000;   // 100 kHz, safest
+static constexpr uint32_t SENSOR_I2C_HZ = 100000;
 
 static constexpr uint8_t BME280_ADDR_PRIMARY   = 0x76;
 static constexpr uint8_t BME280_ADDR_ALTERNATE = 0x77;
@@ -46,9 +26,6 @@ static bool tryBme280() {
   return false;
 }
 
-// Walks every 7-bit I2C address so a wiring problem is obvious before we
-// even try the BME280 driver — if this finds nothing, don't bother
-// debugging the driver, go check SDA/SCL/VCC/GND first.
 static void scanBus() {
   Serial.print("[i2c] scanning Wire1... ");
   uint8_t found = 0;
@@ -68,7 +45,7 @@ static void scanBus() {
 
 void setup() {
   Serial.begin(115200);
-  delay(800);   // let USB-CDC enumerate before we start printing
+  delay(800);
 
   Serial.println();
   Serial.println("=====================================");
@@ -88,8 +65,6 @@ void setup() {
   bmeOk = tryBme280();
   if (bmeOk) {
     Serial.printf("OK @ 0x%02X\n", bmeAddr);
-    // "Weather monitoring" preset from the Bosch datasheet: long-term
-    // average, low power, no filtering.
     bme.setSampling(Adafruit_BME280::MODE_NORMAL,
                     Adafruit_BME280::SAMPLING_X1,
                     Adafruit_BME280::SAMPLING_X1,
@@ -117,7 +92,7 @@ void loop() {
 
   float t = bme.readTemperature();
   float h = bme.readHumidity();
-  float p = bme.readPressure() / 100.0f;   // Pa -> hPa
+  float p = bme.readPressure() / 100.0f;
 
   if (isnan(t) || isnan(h) || isnan(p)) {
     Serial.println("[bme280] read returned NaN — sensor may have dropped off");

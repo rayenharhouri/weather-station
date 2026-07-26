@@ -1,33 +1,3 @@
-/*
- * LIGHTENCY ESP32-S3 — sensor sanity check.
- *
- * Boots the onboard OLED, scans the external I²C bus, probes every
- * sensor the wiring schema expects, and watches the rain-gauge GPIO.
- * Live status grid on the screen + verbose dump to Serial at 115200.
- * No WiFi, no MQTT — just hardware diagnostics.
- *
- *   pio run -e sanity -t upload
- *   pio device monitor
- *
- * Per the WeatherHub wiring schema:
- *
- *   OLED — internal (already routed on the dev board, do NOT wire):
- *     SDA   = GPIO 17    SCL   = GPIO 18
- *     RST   = GPIO 21    VEXT  = GPIO 36   (active-LOW power gate)
- *
- *   External sensors (Wire1):
- *     SDA   = GPIO 41    SCL   = GPIO 42
- *     BME280 @ 0x76  (CS→3V3 enables I²C, ADDR→GND selects 0x76)
- *     BH1750 @ 0x23  (ADDR open)
- *
- *   Rain gauge (reed-switch contact closure):
- *     GPIO 5  (INPUT_PULLUP; closure pulls LOW, FALLING-edge ISR
- *              increments a counter)
- *
- * Manual rain-gauge test without the actual gauge: jump a wire briefly
- * between GPIO 5 and GND. Each clean contact should bump the tip counter
- * by 1 (plus or minus a few from contact bounce — that's why we debounce).
- */
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -35,48 +5,38 @@
 #include <Adafruit_BME280.h>
 #include <BH1750.h>
 
-// ─── Pinout ────────────────────────────────────────────────────────
-// OLED — on the primary I²C bus (Wire).
 static constexpr uint8_t OLED_SDA = 17;
 static constexpr uint8_t OLED_SCL = 18;
 static constexpr uint8_t OLED_RST = 21;
-static constexpr uint8_t OLED_VEXT = 36;     // active-LOW
+static constexpr uint8_t OLED_VEXT = 36;
 
-// External sensors — on the secondary I²C bus (Wire1).
 static constexpr uint8_t SENSOR_SDA = 41;
 static constexpr uint8_t SENSOR_SCL = 42;
-static constexpr uint32_t SENSOR_I2C_HZ = 100000;   // 100 kHz, safest
+static constexpr uint32_t SENSOR_I2C_HZ = 100000;
 
-// Sensor I²C addresses.
 static constexpr uint8_t BME280_ADDR_PRIMARY   = 0x76;
 static constexpr uint8_t BME280_ADDR_ALTERNATE = 0x77;
 static constexpr uint8_t BH1750_ADDR_PRIMARY   = 0x23;
 static constexpr uint8_t BH1750_ADDR_ALTERNATE = 0x5C;
 
-// Rain gauge — reed switch contact closure on this pin.
 static constexpr uint8_t RAIN_GPIO = 5;
-static constexpr uint32_t RAIN_DEBOUNCE_US = 50000;   // 50 ms
+static constexpr uint32_t RAIN_DEBOUNCE_US = 50000;
 
-// ─── Hardware handles ──────────────────────────────────────────────
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C oled(
     U8G2_R0,
-    /* reset = */ OLED_RST,
-    /* clock = */ OLED_SCL,
-    /* data  = */ OLED_SDA);
+    OLED_RST,
+    OLED_SCL,
+    OLED_SDA);
 
 Adafruit_BME280 bme;
 BH1750          lux;
 
-// ─── State ─────────────────────────────────────────────────────────
 enum class SensorState : uint8_t { Missing, Ok, Error };
 static SensorState bmeState   = SensorState::Missing;
 static SensorState bh1750State = SensorState::Missing;
 static uint8_t     bmeAddr    = 0;
 static uint8_t     bh1750Addr = 0;
 
-// Per-bus device counts. Wire is the OLED bus (should always have 1 = 0x3C
-// for the SSD1306); Wire1 is the external sensor bus (should have 2 when
-// BME280 + BH1750 are present).
 static uint8_t wireDeviceCount  = 0;
 static uint8_t wire1DeviceCount = 0;
 
@@ -87,8 +47,6 @@ static uint32_t lastSerialMs = 0;
 static uint32_t lastOledMs   = 0;
 static uint32_t lastScanMs   = 0;
 
-// ─── ISR: rain tip ─────────────────────────────────────────────────
-// Tightly debounced so reed-switch bounce doesn't quadruple-count.
 void IRAM_ATTR onRainTip() {
   const uint32_t now = micros();
   if (now - lastRainTipUs < RAIN_DEBOUNCE_US) return;
@@ -96,9 +54,6 @@ void IRAM_ATTR onRainTip() {
   rainTips++;
 }
 
-// ─── I²C scanner ───────────────────────────────────────────────────
-// Walks every 7-bit address on the bus, returns count of devices that
-// ACK'd. Writes each ACK'd address into `out` (up to outCap).
 static uint8_t scanI2C(TwoWire& bus, uint8_t* out, uint8_t outCap) {
   uint8_t count = 0;
   for (uint8_t addr = 1; addr < 127; addr++) {
@@ -112,7 +67,6 @@ static uint8_t scanI2C(TwoWire& bus, uint8_t* out, uint8_t outCap) {
   return count;
 }
 
-// ─── Sensor probe + init ───────────────────────────────────────────
 static SensorState tryBme280() {
   if (bme.begin(BME280_ADDR_PRIMARY, &Wire1)) {
     bmeAddr = BME280_ADDR_PRIMARY;
@@ -121,7 +75,6 @@ static SensorState tryBme280() {
   } else {
     return SensorState::Missing;
   }
-  // Weather monitoring preset from the datasheet (low power, 1 Hz).
   bme.setSampling(Adafruit_BME280::MODE_NORMAL,
                   Adafruit_BME280::SAMPLING_X1,
                   Adafruit_BME280::SAMPLING_X1,
@@ -143,7 +96,6 @@ static SensorState tryBh1750() {
   return SensorState::Missing;
 }
 
-// ─── Drawing ───────────────────────────────────────────────────────
 static const char* stateGlyph(SensorState s) {
   switch (s) {
     case SensorState::Ok:      return "ok";
@@ -156,13 +108,9 @@ static void renderScreen(float t, float h, float p, float l, bool rainPin) {
   oled.clearBuffer();
   oled.setFont(u8g2_font_5x7_tf);
 
-  // Title
   oled.drawStr(0, 7, "LIGHTENCY  sanity");
   oled.drawHLine(0, 9, 128);
 
-  // Per-bus device counts + per-sensor status.
-  // W0 = Wire (OLED bus; should show 1 — the SSD1306 at 0x3C).
-  // W1 = Wire1 (external sensor bus; should show 2 — BME280 + BH1750).
   char line[48];
   snprintf(line, sizeof(line), "W0[%u] W1[%u] B:%s L:%s",
            (unsigned)wireDeviceCount,
@@ -171,7 +119,6 @@ static void renderScreen(float t, float h, float p, float l, bool rainPin) {
            stateGlyph(bh1750State));
   oled.drawStr(0, 18, line);
 
-  // BME280 readings (or dashes if missing)
   if (bmeState == SensorState::Ok && !isnan(t) && !isnan(h)) {
     snprintf(line, sizeof(line), "T %4.1fC  H %4.1f%%", t, h);
   } else {
@@ -186,7 +133,6 @@ static void renderScreen(float t, float h, float p, float l, bool rainPin) {
   }
   oled.drawStr(0, 36, line);
 
-  // BH1750 reading
   if (bh1750State == SensorState::Ok && !isnan(l)) {
     snprintf(line, sizeof(line), "L %6.0f lux", l);
   } else {
@@ -194,12 +140,10 @@ static void renderScreen(float t, float h, float p, float l, bool rainPin) {
   }
   oled.drawStr(0, 45, line);
 
-  // Rain tips + pin state
   snprintf(line, sizeof(line), "RAIN tips:%lu pin:%s",
            (unsigned long)rainTips, rainPin ? "HI" : "LO");
   oled.drawStr(0, 54, line);
 
-  // Footer: uptime + free heap (KB)
   uint32_t sec = millis() / 1000;
   uint32_t freeKb = ESP.getFreeHeap() / 1024;
   snprintf(line, sizeof(line), "up %lu:%02lu  heap %luk",
@@ -210,7 +154,6 @@ static void renderScreen(float t, float h, float p, float l, bool rainPin) {
   oled.sendBuffer();
 }
 
-// ─── Serial logging ────────────────────────────────────────────────
 static void logReadingLine(float t, float h, float p, float l, bool rainPin) {
   Serial.printf(
       "[t=%6lus] T=%6.2fC H=%5.2f%% P=%7.2fhPa  L=%7.0flx  rain tips=%lu pin=%s\n",
@@ -220,7 +163,6 @@ static void logReadingLine(float t, float h, float p, float l, bool rainPin) {
       rainPin ? "HIGH" : "LOW");
 }
 
-// Annotate well-known addresses so the scan output reads itself.
 static const char* knownDevice(uint8_t addr) {
   switch (addr) {
     case 0x3C:                       return " (SSD1306 OLED)";
@@ -235,10 +177,6 @@ static const char* knownDevice(uint8_t addr) {
 static void logI2CScan() {
   uint8_t addrs[16];
 
-  // Wire (the OLED bus on GPIO 17/18). We never call Wire.begin() ourselves —
-  // U8g2's HW_I2C constructor did that for us in setup(). If this scan shows
-  // 0x3C, the scan code + I²C peripheral are working; any failure on Wire1
-  // is then specifically a Wire1 problem.
   wireDeviceCount = scanI2C(Wire, addrs, sizeof(addrs));
   Serial.printf("[i2c] Wire  scan (OLED bus, SDA=%u SCL=%u): %u device(s)",
                 OLED_SDA, OLED_SCL, (unsigned)wireDeviceCount);
@@ -247,8 +185,6 @@ static void logI2CScan() {
   }
   Serial.println();
 
-  // Wire1 (the external sensor bus on GPIO 41/42). This is the one that
-  // matters for BME280 + BH1750.
   wire1DeviceCount = scanI2C(Wire1, addrs, sizeof(addrs));
   Serial.printf("[i2c] Wire1 scan (sensor bus, SDA=%u SCL=%u @ %lu Hz): %u device(s)",
                 SENSOR_SDA, SENSOR_SCL,
@@ -259,11 +195,6 @@ static void logI2CScan() {
   Serial.println();
 }
 
-// Read the raw idle state of the SDA + SCL pins BEFORE Wire1.begin()
-// claims them. With external pull-ups present (every reputable sensor
-// breakout has them), both pins should read HIGH even with no
-// `INPUT_PULLUP` set. If they read LOW, something is shorting the line —
-// most often a dead sensor module pulling SDA permanently to ground.
 static void probePreInitBus() {
   pinMode(SENSOR_SDA, INPUT);
   pinMode(SENSOR_SCL, INPUT);
@@ -301,10 +232,9 @@ static void probePreInitBus() {
   }
 }
 
-// ─── Lifecycle ─────────────────────────────────────────────────────
 void setup() {
   Serial.begin(115200);
-  delay(800);   // give USB-CDC host a moment to enumerate before printing
+  delay(800);
 
   Serial.println();
   Serial.println("===========================================");
@@ -318,9 +248,8 @@ void setup() {
                 RAIN_GPIO, (unsigned long)RAIN_DEBOUNCE_US);
   Serial.println("-------------------------------------------");
 
-  // ── OLED power + bring-up ──
   pinMode(OLED_VEXT, OUTPUT);
-  digitalWrite(OLED_VEXT, LOW);     // active-LOW: pull low to power OLED rail
+  digitalWrite(OLED_VEXT, LOW);
   delay(50);
   oled.begin();
   oled.setContrast(255);
@@ -330,23 +259,16 @@ void setup() {
   oled.drawStr(0, 20, "booting...");
   oled.sendBuffer();
 
-  // ── Pre-init bus probe ──
-  // Look at the SDA/SCL pin levels *before* Wire1 grabs them. Tells us
-  // whether external pull-ups exist and whether anything is shorting
-  // the lines to ground.
   probePreInitBus();
 
-  // ── External I²C bus ──
   if (!Wire1.begin(SENSOR_SDA, SENSOR_SCL, SENSOR_I2C_HZ)) {
     Serial.println("[wire1] FAILED to start I²C peripheral");
   } else {
     Serial.println("[wire1] up");
   }
 
-  // ── First dual-bus scan ──
   logI2CScan();
 
-  // ── Probe sensors ──
   Serial.print("[bme280] begin... ");
   bmeState = tryBme280();
   if (bmeState == SensorState::Ok) {
@@ -363,7 +285,6 @@ void setup() {
     Serial.println("NOT FOUND");
   }
 
-  // ── Rain switch ──
   pinMode(RAIN_GPIO, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RAIN_GPIO), onRainTip, FALLING);
   Serial.printf("[rain] GPIO %u watching for FALLING (current state: %s)\n",
@@ -377,7 +298,6 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
 
-  // ── 1-second cadence: read + render + log ──
   if (now - lastSerialMs >= 1000) {
     lastSerialMs = now;
     lastOledMs   = now;
@@ -386,7 +306,7 @@ void loop() {
     if (bmeState == SensorState::Ok) {
       t = bme.readTemperature();
       h = bme.readHumidity();
-      p = bme.readPressure() / 100.0f;   // Pa → hPa
+      p = bme.readPressure() / 100.0f;
       if (isnan(t) || isnan(h) || isnan(p)) {
         bmeState = SensorState::Error;
         Serial.println("[bme280] read returned NaN — sensor may have dropped off");
@@ -405,13 +325,10 @@ void loop() {
     renderScreen(t, h, p, l, rainPin);
   }
 
-  // ── 10-second cadence: re-scan I²C so a sensor coming/going is visible ──
   if (now - lastScanMs >= 10000) {
     lastScanMs = now;
     logI2CScan();
 
-    // If a sensor went into ERROR but the I²C address is still ack'ing,
-    // try to bring it back. Cheap recovery for transient glitches.
     if (bmeState != SensorState::Ok) {
       SensorState next = tryBme280();
       if (next == SensorState::Ok && bmeState != SensorState::Ok) {

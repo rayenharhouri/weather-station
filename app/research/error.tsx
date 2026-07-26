@@ -5,16 +5,6 @@ import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HairlineCard } from '@/components/ui/hairline-card';
 
-/**
- * Research-portal scoped error boundary. Renders in place of the route
- * content but leaves the research shell (sidebar + topbar) intact, so the
- * user can navigate to another page without a full reload.
- *
- * Most crashes here are either:
- *   - the user has no active API token, so a /v1/* call 401'd; or
- *   - the backend returned an unexpected shape (schema validation throw).
- * Either is recoverable by retrying or going to the Account page.
- */
 export default function ResearchError({
   error,
   reset,
@@ -23,7 +13,6 @@ export default function ResearchError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.error('[research/error] caught:', error);
   }, [error]);
 

@@ -1,22 +1,3 @@
-/**
- * Integration smoke test for `tenant:provision`.
- *
- *   npm run test:integration
- *
- * Skipped by default. Set `RUN_INTEGRATION_TESTS=1` and ensure a Postgres
- * with TimescaleDB is reachable using the env vars in `.env.example`
- * (`MASTER_DB_*`, `TENANT_DB_*`). The test creates a one-shot tenant
- * with a randomised slug and cleans up the tenant DB at the end. The
- * row in `master.tenants` is left in place so a manual `tenants` list
- * still shows what was created.
- *
- * What it asserts:
- *   1. The CLI exits 0.
- *   2. The new tenant DB is reachable.
- *   3. All five core tables exist (`users`, `stations`, `readings`,
- *      `api_tokens`, `alerts`).
- *   4. The `users` row for the admin email is present + hashed.
- */
 import 'dotenv/config';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -33,13 +14,10 @@ describeIf('tenant:provision', () => {
   const dbName = `${process.env.TENANT_DB_PREFIX ?? 'tenant_'}${slug}`;
 
   afterAll(async () => {
-    // Drop the spawned tenant DB. We leave the `tenants` row alone so the
-    // operator can still see the audit trail of what was created.
     if (!ENABLED) return;
     const admin = adminClient();
     try {
       await admin.connect();
-      // Connections to the DB we're about to drop must be closed.
       await admin.query(
         `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`,
         [dbName],
@@ -54,7 +32,6 @@ describeIf('tenant:provision', () => {
     const scriptPath = join(__dirname, 'provision-tenant.ts');
     const tsNode = join(process.cwd(), 'node_modules', '.bin', 'ts-node');
 
-    // Args mirror the CLI banner in provision-tenant.ts.
     const { stdout } = await execFileP(
       tsNode,
       [
@@ -70,7 +47,6 @@ describeIf('tenant:provision', () => {
     );
     expect(stdout).toContain(slug);
 
-    // Confirm the tenant DB is reachable + tables exist.
     const tenantConn = new Client({
       host: process.env.TENANT_DB_HOST ?? 'localhost',
       port: parseInt(process.env.TENANT_DB_PORT ?? '5432', 10),

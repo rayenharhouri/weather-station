@@ -67,7 +67,6 @@ export interface DeviceStatus {
   recordsProcessed?: number;
 }
 
-/** RSSI in dBm → human-readable bucket. Mirrors what the frontend renders. */
 function bucketRssi(rssi: number | null): SignalStrength {
   if (rssi == null) return 'none';
   if (rssi >= -50) return 'excellent';
@@ -77,7 +76,6 @@ function bucketRssi(rssi: number | null): SignalStrength {
   return 'none';
 }
 
-/** Linear normalize a Li-ion / LiPo cell voltage to 0–100%. */
 function voltageToPercent(volts: number | null): number | undefined {
   if (volts == null) return undefined;
   const min = 3.3;
@@ -120,7 +118,6 @@ export class ReadingsService {
     const bucket = INTERVAL_BUCKET[interval];
 
     if (!bucket) {
-      // raw: just stream rows
       return repo
         .createQueryBuilder('r')
         .where('r."stationId" = :stationId', { stationId: query.stationId })
@@ -130,8 +127,6 @@ export class ReadingsService {
         .getMany();
     }
 
-    // Aggregated via Timescale's time_bucket(). We hand-craft the SELECT
-    // because TypeORM's QB doesn't model time_bucket() natively.
     const rows = await repo.query(
       `
       SELECT
@@ -185,7 +180,6 @@ export class ReadingsService {
 
     for (const metric of Object.keys(METRIC_COLUMN) as MetricKey[]) {
       const col = METRIC_COLUMN[metric];
-      // Pull min/max/avg + a quick trend comparison (first half vs second half).
       const row = await repo.query(
         `
         SELECT
@@ -234,12 +228,6 @@ export class ReadingsService {
     return summaries;
   }
 
-  /**
-   * Computed device-status snapshot for a station. Derives signal-strength
-   * bucket from `signalRssi`, battery % from `batteryVoltage` (Li-ion 3.3V →
-   * 4.2V range), and records-processed from a COUNT over the station's
-   * readings. Returns null only if the station has never reported.
-   */
   async getDeviceStatus(tenantSlug: string, stationId: string): Promise<DeviceStatus | null> {
     const repo = await this.repo(tenantSlug);
     const latest = await this.findLatest(tenantSlug, stationId);
@@ -264,8 +252,6 @@ export class ReadingsService {
       lastReceivedAt: latest.receivedAt.toISOString(),
       signalStrength: bucketRssi(latest.signalRssi ?? null),
       batteryLevel: voltageToPercent(latest.batteryVoltage ?? null),
-      // Memory + uptime aren't carried on the reading shape yet — leave
-      // them undefined so the existing DeviceStatus zod schema is happy.
       memoryUsage: undefined,
       uptime: undefined,
       recordsProcessed,
@@ -294,9 +280,6 @@ export class ReadingsService {
     });
     const saved = await repo.save(reading);
 
-    // Side effects: keep the station in sync, notify SSE subscribers, and
-    // run the alerts threshold evaluator. Each is independent — failures
-    // are swallowed so a bad side-effect never breaks ingest.
     await this.stationsService
       .touchLastSync(tenantSlug, saved.stationId, saved.receivedAt)
       .catch(() => undefined);

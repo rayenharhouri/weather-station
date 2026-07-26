@@ -62,10 +62,6 @@ function SettingsContent() {
   const [thresholdsFlash, setThresholdsFlash] = useState(false);
   const [notificationsFlash, setNotificationsFlash] = useState(false);
 
-  // Seed local state from the server snapshot once it arrives. After that
-  // each control writes through its mutation, which invalidates the
-  // settings query — the effect re-runs and reseeds from the canonical
-  // value, so the UI stays consistent across tabs.
   useEffect(() => {
     if (!settings) return;
     setAlertsEmail(settings.notifications.alertsEmail);

@@ -91,12 +91,6 @@ export class DatasetsController {
     await this.datasets.delete(tenant.slug, user.id, id);
   }
 
-  /**
-   * Download endpoint stub. Real export materialisation lands in Phase 3.4
-   * (exports module). For now we serve a small CSV header with the dataset
-   * metadata so the link works end-to-end and tests have something to
-   * assert. Phase 3.4 swaps this for a redirect into the exports flow.
-   */
   @ApiOperation({ summary: "Download a dataset (metadata-CSV stub until 3.4 streaming export)." })
   @Get(':id/download')
   async download(

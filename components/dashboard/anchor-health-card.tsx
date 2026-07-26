@@ -4,7 +4,6 @@ import { ShieldCheck } from 'lucide-react';
 import { HairlineCard } from '@/components/ui/hairline-card';
 
 interface AnchorHealthCardProps {
-  /** 0–100 health score derived from verified-vs-pending ratio. */
   health: number;
   anchorsToday: number;
   recordsToday: number;

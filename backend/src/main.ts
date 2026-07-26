@@ -6,9 +6,6 @@ import { AppModule } from './app.module';
 import { assertProductionSecrets, loadConfig, type RunMode } from './config/configuration';
 
 async function bootstrap(): Promise<void> {
-  // Validate the config (and mode in particular) before NestFactory boots
-  // anything that might depend on defaults. Production with leftover dev
-  // secrets throws here, never reaches listen().
   const rawConfig = loadConfig();
   assertProductionSecrets(rawConfig);
 
@@ -34,16 +31,10 @@ async function bootstrap(): Promise<void> {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      // Don't fail on unknown fields — `whitelist: true` already strips them.
-      // SSE endpoints carry auth via ?token=… which is intentionally not in DTOs.
       forbidNonWhitelisted: false,
     }),
   );
 
-  // OpenAPI / Swagger. Served at /docs (interactive UI) and /docs-json
-  // (raw spec for codegen). Disabled in production mode by default since
-  // we don't want to ship the schema externally — flip `SWAGGER_ENABLED=true`
-  // to expose it intentionally.
   const swaggerEnabled = mode !== 'production' || process.env.SWAGGER_ENABLED === 'true';
   if (swaggerEnabled) {
     const doc = new DocumentBuilder()
@@ -87,7 +78,6 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('Failed to bootstrap WeatherHub backend:', err);
   process.exit(1);
 });

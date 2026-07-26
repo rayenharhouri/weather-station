@@ -21,17 +21,6 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  /**
-   * Resolve the tenant for a login attempt.
-   *
-   * Order:
-   *   1. The request's resolved tenant (set by TenantContextMiddleware from
-   *      subdomain or `X-Tenant` header).
-   *   2. The email domain — looked up in master.tenants.emailDomain.
-   *
-   * Throws if neither source produces a tenant — login cannot proceed without
-   * knowing which DB to query.
-   */
   private async resolveTenantForLogin(
     requestTenant: Tenant | undefined,
     email: string,
@@ -58,7 +47,6 @@ export class AuthService {
 
     const user = await userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
     if (!user) {
-      // Same response shape as bad password — don't leak which users exist.
       throw new UnauthorizedException('Invalid credentials');
     }
 

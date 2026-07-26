@@ -204,7 +204,6 @@ export const generateMockIntegrityBatches = (): IntegrityBatch[] => {
   ];
 };
 
-// SSE Event stream generator
 export const generateMockSSEReadings = (): WeatherReading => {
   const now = new Date();
   return {

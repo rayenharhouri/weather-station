@@ -16,15 +16,6 @@ const METRIC_FIELDS: Array<keyof WeatherReading> = [
   'signalRssi',
 ];
 
-/**
- * Materialise the requested slice of readings into a single file on disk.
- * Streams rows page-by-page so we never hold the full result set in memory
- * — important once a tenant has months of data.
- *
- * Progress reporting is coarse: we tick a callback after each page-write so
- * the UI gets a usable bar without us having to know the total count up
- * front. `onProgress` returns the new progress percent (0–100).
- */
 export interface MaterializeOptions {
   job: ExportJob;
   readingRepo: Repository<WeatherReading>;
@@ -50,9 +41,6 @@ export async function materialize(opts: MaterializeOptions): Promise<Materialize
   let recordCount = 0;
   let firstChunk = true;
 
-  // Approximate total for progress: count first, then page. Two scans is
-  // wasteful but the count query is fast and the alternative — guessing
-  // progress from time elapsed — is worse for UX.
   const total = await countReadings(readingRepo, job);
 
   try {
@@ -86,8 +74,6 @@ export async function materialize(opts: MaterializeOptions): Promise<Materialize
     });
   }
 
-  // CSVs are easy: prepend header if we wrote at least one row. For
-  // streaming simplicity we emit the header inline on the first row.
   const stats = await stat(filePath);
   return { filePath, recordCount, sizeBytes: stats.size };
 }
@@ -133,9 +119,6 @@ function formatRow(r: WeatherReading, format: ExportFormat, isFirst: boolean): s
     ];
     return header + cells.join(',') + '\n';
   }
-  // parquet: not implemented in Phase 3.4 (needs an Arrow/Parquet writer
-  // dependency). We fall back to NDJSON with a `.parquet` extension that
-  // the docs page warns about. A real Parquet writer is a 5+ task.
   return JSON.stringify(r) + '\n';
 }
 

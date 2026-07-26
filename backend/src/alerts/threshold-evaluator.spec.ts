@@ -31,8 +31,6 @@ describe('threshold-evaluator', () => {
 
   it('fires the higher severity when both warning and critical match', () => {
     const breaches = evaluateReading(reading({ temperatureC: 41 }));
-    // Rule table has both `> 35 warning` and `> 40 critical`; the evaluator
-    // collapses them to keep severity rank.
     expect(breaches).toHaveLength(1);
     expect(breaches[0]).toMatchObject({ metric: 'temperature', severity: 'critical' });
   });
@@ -46,7 +44,6 @@ describe('threshold-evaluator', () => {
   });
 
   it('ignores null metrics', () => {
-    // Battery null → no battery alert even though 0 would have tripped.
     const breaches = evaluateReading(reading({ batteryVoltage: null }));
     expect(breaches.every((b) => b.metric !== 'battery')).toBe(true);
   });

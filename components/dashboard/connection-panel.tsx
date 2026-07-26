@@ -5,15 +5,10 @@ import { LiveDot, type LiveState } from '@/components/dashboard/live-dot';
 
 interface ConnectionPanelProps {
   state: LiveState;
-  /** ISO timestamp of the last received reading. */
   lastReceivedAt?: string;
-  /** Bytes per second over the last second. */
   bytesPerSec?: number;
-  /** Messages per second over the last second. */
   msgsPerSec?: number;
-  /** Round-trip latency between the server's recordedAt and our receivedAt, in ms. */
   latencyMs?: number;
-  /** ISO timestamp of the connection open. */
   openedAt?: string;
 }
 

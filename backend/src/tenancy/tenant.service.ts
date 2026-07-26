@@ -8,15 +8,6 @@ import {
   createTenantDataSource,
 } from '../database/tenant-data-source.factory';
 
-/**
- * Resolves tenants from the master registry and lazily builds (and caches) a
- * TypeORM DataSource per tenant. Each tenant DataSource has its own connection
- * pool to the tenant's physical Postgres database.
- *
- * The set of `entities` and `migrations` registered against a tenant DataSource
- * is intentionally empty here — domain modules (auth, readings, alerts, etc.)
- * will register theirs as they come online in later phases.
- */
 @Injectable()
 export class TenantService implements OnModuleDestroy {
   private readonly logger = new Logger(TenantService.name);
@@ -46,11 +37,6 @@ export class TenantService implements OnModuleDestroy {
     return this.tenantRepo.find({ where: { active: true }, order: { slug: 'ASC' } });
   }
 
-  /**
-   * Returns (or lazily creates) a connected DataSource for the given tenant
-   * slug. Future domain modules will pass their entity list into the factory
-   * so each tenant's DataSource knows about Reading, Alert, etc.
-   */
   async getDataSource(slug: string): Promise<DataSource> {
     const existing = this.dataSources.get(slug);
     if (existing?.isInitialized) {

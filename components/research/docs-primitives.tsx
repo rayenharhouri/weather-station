@@ -3,15 +3,6 @@
 import * as React from 'react';
 import { Info as InfoIcon, type LucideIcon } from 'lucide-react';
 
-/**
- * Reusable primitives for API reference docs. Every variant is hairline-
- * bordered to fit the flight-deck system; severity colour comes from the
- * shared --sev-* tokens so the docs feel like the rest of the product.
- */
-
-// ─────────────────────────────────────────────────────────────
-// Method badge — GET / POST / PUT / DELETE
-// ─────────────────────────────────────────────────────────────
 const METHOD_COLOR: Record<string, string> = {
   GET: 'var(--sev-info)',
   POST: 'var(--sev-warn)',
@@ -36,9 +27,6 @@ export function MethodBadge({ method }: { method: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Param row
-// ─────────────────────────────────────────────────────────────
 export interface ParamRowProps {
   name: string;
   type: string;
@@ -74,9 +62,6 @@ export function ParamRow({ name, type, required, defaultValue, children }: Param
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Schema row (supports indent for nested fields)
-// ─────────────────────────────────────────────────────────────
 export interface SchemaRowProps {
   name: string;
   type: string;
@@ -103,9 +88,6 @@ export function SchemaRow({ name, type, indent = 0, children }: SchemaRowProps) 
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Error row
-// ─────────────────────────────────────────────────────────────
 export interface ErrorRowProps {
   code: number;
   name: string;
@@ -129,9 +111,6 @@ export function ErrorRow({ code, name, children }: ErrorRowProps) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Callout — info / warn / critical / success
-// ─────────────────────────────────────────────────────────────
 type CalloutKind = 'info' | 'warn' | 'critical' | 'success';
 
 export interface CalloutProps {
@@ -170,9 +149,6 @@ export function Callout({ kind = 'info', title, icon: Icon, children }: CalloutP
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Inline mono code — `<DocsCode>`
-// ─────────────────────────────────────────────────────────────
 export function DocsCode({ children }: { children: React.ReactNode }) {
   return (
     <code className="font-mono text-[12.5px] text-fg px-1.5 py-px rounded-sm bg-surface-2 border border-border-inset">
@@ -181,9 +157,6 @@ export function DocsCode({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Section heading with anchor § symbol
-// ─────────────────────────────────────────────────────────────
 export function DocsH2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2

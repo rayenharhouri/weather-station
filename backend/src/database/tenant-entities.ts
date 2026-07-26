@@ -12,11 +12,6 @@ import { Grant } from '../grants/entities/grant.entity';
 import { Dataset } from '../datasets/entities/dataset.entity';
 import { ExportJob } from '../exports/entities/export-job.entity';
 
-/**
- * Single source of truth for which entities live inside a tenant database.
- * Every per-tenant module (auth, stations, readings, alerts, integrity)
- * registers its entity here so all tenant DataSources see them.
- */
 export const TENANT_ENTITIES: MixedList<Function | string | EntitySchema> = [
   User,
   Station,

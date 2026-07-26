@@ -2,11 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
 import { WeatherReading } from './entities/weather-reading.entity';
 
-/**
- * In-memory pub/sub for live reading streams. Subscribers are keyed by
- * `<tenantSlug>:<stationId>`. Single-instance only — scaling out requires
- * a Redis/NATS adapter behind this interface.
- */
 @Injectable()
 export class ReadingsStreamService {
   private readonly logger = new Logger(ReadingsStreamService.name);

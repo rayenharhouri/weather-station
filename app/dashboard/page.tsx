@@ -101,20 +101,16 @@ function DashboardContent() {
     enabled: !!station,
   });
 
-  // SSE — overlay the freshest reading on top of the polled latest.
   const [liveReading, setLiveReading] = useState<WeatherReading | null>(null);
   const handleLive = useCallback((r: WeatherReading) => setLiveReading(r), []);
   const { isConnected } = useLiveReadings(stationId, handleLive);
   const current = liveReading ?? latest ?? null;
 
-  // Report this page's live state up to the operations topbar so the
-  // header's LiveDot reflects reality (instead of being hardcoded `live`).
   useReportLiveStatus({
     connected: isConnected,
     lastSyncAt: current?.receivedAt ?? current?.recordedAt ?? null,
   });
 
-  // Build sparkline arrays from history — one per metric, padded if missing.
   const history = historyData?.items ?? [];
   const sparks = {
     temperature: extractSeries(history, 'temperatureC'),

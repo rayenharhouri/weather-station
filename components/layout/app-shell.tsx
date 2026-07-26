@@ -9,12 +9,6 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { stationService } from '@/services/api';
 import { LiveStatusProvider, useLiveStatus } from '@/providers/LiveStatusProvider';
 
-/**
- * Authenticated-page shell — sidebar + topbar + scrollable main region.
- * Used by every page that lives behind login. Tenant info is derived from
- * the logged-in user's email domain until the backend exposes a richer
- * tenant identity on the client.
- */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <LiveStatusProvider>
@@ -34,8 +28,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
     staleTime: 60_000,
   });
 
-  // Derive tenant hostname from email for the brand block.
-  // chiheb@enit.utm.tn → enit.weatherhub.tn
   const tenantSlug = user?.email?.split('@')[1]?.split('.')[0]?.toLowerCase() ?? 'enit';
   const tenantHost = `${tenantSlug}.weatherhub.tn`;
 

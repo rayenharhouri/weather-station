@@ -9,14 +9,6 @@ import {
 export type AlertSeverity = 'info' | 'warning' | 'critical';
 export type AlertStatus = 'open' | 'acknowledged' | 'resolved';
 
-/**
- * A threshold breach produced by the evaluator on each incoming reading.
- * Lifecycle: `open` → `acknowledged` (operator saw it) → `resolved` (operator
- * marked it handled). Lives in the tenant DB; one row per breach.
- *
- * Shape mirrors the frontend `AlertSchema` in [lib/validation.ts](lib/validation.ts)
- * so the UI can render rows without translation.
- */
 @Entity({ name: 'alerts' })
 @Index('IDX_alerts_station_triggered', ['stationId', 'triggeredAt'])
 @Index('IDX_alerts_status', ['status'])

@@ -7,17 +7,10 @@ import { Button } from '@/components/ui/button';
 import type { RecordVerificationResult } from '@/types';
 
 interface VerifyRecordCardProps {
-  /** Loose result type — frontend types lag behind the backend schema in a few places. */
   onVerify: (recordId: string) => Promise<RecordVerificationResult | null>;
   isPending?: boolean;
 }
 
-/**
- * Record verification panel — input on top, structured result below. Used on
- * the Integrity page. Result shows hash match + batch membership + Hedera
- * mirror-node status so the user can quickly see *why* a record is (or isn't)
- * verifiable.
- */
 export function VerifyRecordCard({ onVerify, isPending }: VerifyRecordCardProps) {
   const [recordId, setRecordId] = useState('');
   const [result, setResult] = useState<RecordVerificationResult | null>(null);

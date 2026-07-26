@@ -8,17 +8,6 @@ import { ConfigService } from '@nestjs/config';
 import { ApiToken } from '../tokens/entities/api-token.entity';
 import { TenantService } from '../tenancy/tenant.service';
 
-/**
- * Periodic cron that flips `active` API tokens to `expired` once their
- * `expiresAt` window has passed.
- *
- * Lazy expiry already covers reads (`TokenAuthGuard` rejects a request the
- * moment it sees an expired token, and stamps the status as it does). The
- * sweeper exists so the list view on `/research/tokens` shows reality
- * without having to wait for each row to be touched.
- *
- * Skipped in `test` mode.
- */
 @Injectable()
 export class TokenSweeperService implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(TokenSweeperService.name);
@@ -33,7 +22,6 @@ export class TokenSweeperService implements OnApplicationBootstrap, OnModuleDest
   onApplicationBootstrap(): void {
     const mode = this.config.get<string>('mode');
     if (mode === 'test') return;
-    // Hourly is enough; the lazy path covers anything finer-grained.
     const tickMs = this.config.get<number>('schedulers.tokenSweeperTickMs') ?? 60 * 60_000;
     if (tickMs <= 0) return;
     this.handle = setInterval(() => {
@@ -60,7 +48,6 @@ export class TokenSweeperService implements OnApplicationBootstrap, OnModuleDest
         try {
           const ds = await this.tenantService.getDataSource(tenant.slug);
 
-          // 1. Flip tokens past `expiresAt` from active → expired.
           const expiredResult = await ds
             .createQueryBuilder()
             .update(ApiToken)
@@ -74,9 +61,6 @@ export class TokenSweeperService implements OnApplicationBootstrap, OnModuleDest
             this.logger.log(`[${tenant.slug}] expired ${expired} token(s)`);
           }
 
-          // 2. Prune request_logs older than 90 days. Plain DELETE — fine
-          // at this scale; partition-drop swap-in if rows grow past a few
-          // million per tenant.
           const pruneResult: unknown = await ds.query(
             `DELETE FROM "request_logs" WHERE "timestamp" < now() - interval '90 days'`,
           );

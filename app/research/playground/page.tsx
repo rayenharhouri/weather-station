@@ -36,10 +36,6 @@ const METRIC_LABEL: Record<PlaygroundMetric, string> = {
   aqi: 'Air quality',
 };
 
-/**
- * Which numeric field on a WeatherReading carries each metric's value,
- * plus its API unit string.
- */
 const METRIC_READING_FIELD: Record<
   PlaygroundMetric,
   { field: keyof WeatherReading; unit: string }
@@ -86,7 +82,6 @@ export default function PlaygroundPage() {
         setLastRunAt(new Date().toISOString());
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Query failed.');
-        // Keep the previous response visible so the page isn't empty.
       } finally {
         setPending(false);
       }
@@ -94,17 +89,14 @@ export default function PlaygroundPage() {
     [],
   );
 
-  // Initial query on mount.
   useEffect(() => {
     void runQuery(INITIAL_QUERY);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSend = useCallback(() => {
     void runQuery(query);
   }, [query, runQuery]);
 
-  // ⌘ ↵ / ctrl ↵ to send
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -187,9 +179,6 @@ function PageHeader() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Mapping: WeatherReading[] → PlaygroundResponse
-// ─────────────────────────────────────────────────────────────
 function mapReadingsToResponse(
   readings: WeatherReading[],
   query: PlaygroundQuery,
@@ -197,9 +186,6 @@ function mapReadingsToResponse(
 ): PlaygroundResponse {
   const { field, unit } = METRIC_READING_FIELD[query.metric];
 
-  // Filter out readings where the requested metric is missing — older sensors
-  // (or sensors not enabled on a station) emit nulls. The chart looks cleaner
-  // without phantom zeros.
   const data: PlaygroundResponsePoint[] = readings
     .filter((r) => typeof r[field] === 'number')
     .map((r) => {
@@ -211,8 +197,6 @@ function mapReadingsToResponse(
         recordedAt: r.recordedAt,
         value: round2(value),
         unit,
-        // Anchor older readings (> 60 min); newer ones are still pending —
-        // matches what the integrity worker does on the backend.
         merkleAnchor: ageMin > 60 ? `b-${r.id.slice(0, 6)}` : null,
       };
     })

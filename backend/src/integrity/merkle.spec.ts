@@ -1,12 +1,6 @@
 import { WeatherReading } from '../readings/entities/weather-reading.entity';
 import { hashReading, inclusionProof, merkleRoot, verifyProof } from './merkle';
 
-/**
- * Pure-function tests for the Merkle helper. No I/O — runs in milliseconds.
- *
- * These functions back `IntegrityService.verifyRecord` + `verifyBatch`, so
- * any drift here breaks the integrity guarantee. Worth pinning down.
- */
 function reading(overrides: Partial<WeatherReading> = {}): WeatherReading {
   return {
     id: '11111111-1111-1111-1111-111111111111',
@@ -44,7 +38,6 @@ describe('hashReading', () => {
   });
 
   it('ignores trailing-zero formatting jitter on numeric fields', () => {
-    // Rounded to the same value at 4 decimals → identical hash.
     expect(hashReading(reading({ temperatureC: 23.5 }))).toBe(
       hashReading(reading({ temperatureC: 23.5000001 })),
     );
@@ -70,9 +63,6 @@ describe('merkleRoot', () => {
     const a = hashReading(reading({ id: 'a' as any }));
     const b = hashReading(reading({ id: 'b' as any }));
     const c = hashReading(reading({ id: 'c' as any }));
-    // For 3 leaves, the right side of the top pair is `hash(c||c)`. We don't
-    // re-derive that by hand here — just assert it's deterministic and
-    // distinct from a 2-leaf root.
     const r3 = merkleRoot([a, b, c]);
     const r2 = merkleRoot([a, b]);
     expect(r3).not.toBe(r2);

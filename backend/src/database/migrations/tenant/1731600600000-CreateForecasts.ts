@@ -26,8 +26,6 @@ export class CreateForecasts1731600600000 implements MigrationInterface {
       true,
     );
 
-    // Unique on (stationId, horizon) so we upsert one cached forecast per
-    // pair. The service deletes-then-inserts on recompute.
     await queryRunner.createIndex(
       'forecasts',
       new TableIndex({

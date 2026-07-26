@@ -26,8 +26,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly config: ConfigService,
   ) {}
 
-  // ─── Worker lifecycle ────────────────────────────────────────────
-
   onApplicationBootstrap(): void {
     const tickMs = this.config.get<number>('exports.workerTickMs') ?? 5000;
     if (tickMs <= 0) {
@@ -49,11 +47,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     }
   }
 
-  /**
-   * One worker tick: for every active tenant, claim at most one queued job
-   * and materialise it. `FOR UPDATE SKIP LOCKED` makes this safe even with
-   * multiple instances (Phase 5+ might fan workers out horizontally).
-   */
   private async tick(): Promise<void> {
     if (this.workerRunning) return; // re-entrancy guard
     this.workerRunning = true;
@@ -78,8 +71,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     const jobRepo = ds.getRepository(ExportJob);
     const readingRepo = ds.getRepository(WeatherReading);
 
-    // Claim a queued job atomically. SKIP LOCKED makes us tolerant of
-    // parallel workers; no row, no work.
     const claim = await ds.query(
       `WITH next AS (
          SELECT "id" FROM "exports"
@@ -141,8 +132,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     }
   }
 
-  // ─── API surface ─────────────────────────────────────────────────
-
   private async repo(tenantSlug: string): Promise<Repository<ExportJob>> {
     const ds = await this.tenantService.getDataSource(tenantSlug);
     return ds.getRepository(ExportJob);
@@ -155,8 +144,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
       order: { requestedAt: 'DESC' },
       take: 200,
     });
-    // Lazy expiry: flip ready rows past their TTL into `expired` so the
-    // listing reflects reality without waiting on a cleanup cron.
     const now = Date.now();
     for (const r of rows) {
       if (r.status === 'ready' && r.expiresAt && r.expiresAt.getTime() <= now) {
@@ -172,7 +159,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     const job = await repo.findOne({ where: { id: jobId } });
     if (!job) throw new NotFoundException(`Export '${jobId}' not found`);
     if (job.userId !== userId) {
-      // Don't leak existence to other users.
       throw new NotFoundException(`Export '${jobId}' not found`);
     }
     return job;
@@ -207,11 +193,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     return repo.save(job);
   }
 
-  /**
-   * Cancel a queued/running job. We can't yank the worker mid-write, so a
-   * canceled `running` job will still finish materialising — but we mark
-   * the row `failed` immediately so the UI stops waiting on it.
-   */
   async cancel(tenantSlug: string, userId: string, jobId: string): Promise<ExportJob> {
     const repo = await this.repo(tenantSlug);
     const job = await this.get(tenantSlug, userId, jobId);
@@ -224,10 +205,6 @@ export class ExportsService implements OnApplicationBootstrap, OnModuleDestroy {
     return job;
   }
 
-  /**
-   * Hard-delete a finished job + its file. Disallowed for in-flight jobs
-   * (`queued`/`running`) — call `cancel` first.
-   */
   async delete(tenantSlug: string, userId: string, jobId: string): Promise<void> {
     const repo = await this.repo(tenantSlug);
     const job = await this.get(tenantSlug, userId, jobId);

@@ -10,7 +10,6 @@ interface DocsLeaf {
   label: string;
   href: string;
   badge?: string;
-  /** Defaults to `false` for now — only set `true` once the page exists. */
   available?: boolean;
 }
 
@@ -79,16 +78,6 @@ const SECTIONS: DocsSection[] = [
   },
 ];
 
-/**
- * Docs nav — the second sidebar. Sections are collapsible; the active page
- * highlights with the brand accent bar (same convention as the operations
- * sidebar). Branches with children (e.g. Readings) auto-expand when one of
- * their leaves is active.
- *
- * Leaves carry an `available` flag. Only built-out routes set `available:
- * true`; everything else renders dimmed, non-interactive, with a "soon" tag —
- * honest signal that the page is on the way.
- */
 export function DocsNav() {
   const pathname = usePathname();
 
@@ -227,8 +216,6 @@ function NavLeaf({
   const padLeft = indent === 1 ? 'pl-8' : 'pl-11';
   const disabled = !item.available && !active;
 
-  // Disabled: render as a non-link span. Looks dimmed, cursor-not-allowed,
-  // explains itself via title + aria-disabled.
   if (disabled) {
     return (
       <span

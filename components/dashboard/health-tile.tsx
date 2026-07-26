@@ -11,7 +11,6 @@ interface HealthTileProps {
 }
 
 export function HealthTile({ batteryPct, rssiDbm, status = 'OK' }: HealthTileProps) {
-  // RSSI typical range −100 dBm (no signal) → −40 dBm (excellent). Normalize to 0–100.
   const rssiPct = rssiDbm == null ? null : Math.max(0, Math.min(100, (rssiDbm + 100) * 1.25));
   const tone = status === 'OK' ? 'up' : status === 'Degraded' ? 'flat' : 'down';
 

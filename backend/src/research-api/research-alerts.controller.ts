@@ -70,8 +70,6 @@ export class ResearchAlertsController {
       to: query.until,
     });
 
-    // Apply station + metric scope post-fetch. If `query.station` was
-    // unset we still need to drop alerts for stations the token can't see.
     const { scope } = token;
     const stationFilter = (stationId: string): boolean => {
       if (scope.stations.length === 0) return true;

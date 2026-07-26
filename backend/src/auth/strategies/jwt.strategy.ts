@@ -23,8 +23,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly tenantService: TenantService,
   ) {
     super({
-      // Browser EventSource cannot set headers, so SSE endpoints rely on
-      // `?token=<jwt>` query param. Bearer header wins when both are present.
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         ExtractJwt.fromUrlQueryParameter('token'),
@@ -40,7 +38,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Malformed token');
     }
 
-    // Resolve tenant from the JWT's tid claim — authoritative on authenticated routes.
     const tenant = await this.tenantService.findBySlug(payload.tid).catch(() => null);
     if (!tenant) {
       throw new UnauthorizedException('Token references an inactive tenant');
@@ -52,8 +49,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('User no longer exists');
     }
 
-    // Attach tenant to the request so downstream guards/handlers can use it
-    // without re-resolving from middleware.
     req.tenant = tenant;
     return user;
   }

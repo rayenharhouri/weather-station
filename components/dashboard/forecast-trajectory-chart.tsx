@@ -5,7 +5,6 @@ import { useMemo } from 'react';
 export interface ForecastPoint {
   timestamp: string;
   value: number;
-  /** 0–100. Drives the confidence band width. */
   confidence: number;
 }
 
@@ -14,18 +13,10 @@ interface ForecastTrajectoryChartProps {
   color: string;
   unit: string;
   decimals?: number;
-  /** Horizon labels in hours from now — `[1, 3, 6, 24]`. Each gets a vertical marker. */
   horizons?: number[];
   height?: number;
 }
 
-/**
- * Large area-line chart for a single forecast metric. Renders:
- *   - confidence band (lighter fill envelope around the line)
- *   - the prediction line in the metric colour
- *   - horizon markers (+1h / +3h / +6h / +24h) as vertical hairlines with value callouts
- *   - last-point marker
- */
 export function ForecastTrajectoryChart({
   points,
   color,
@@ -49,7 +40,6 @@ export function ForecastTrajectoryChart({
 
   const width = 1000;
 
-  // For horizon markers, find the index closest to each horizon-in-hours.
   const now = Date.now();
   const horizonMarkers = horizons
     .map((h) => {
@@ -179,7 +169,6 @@ function buildPaths(
   const padBottom = 12;
   const drawableH = height - padTop - padBottom;
 
-  // Confidence band scaled by inverse confidence — 100% conf = no band, 50% = sizable band.
   const withBands = points.map((p) => {
     const bandHalf = Math.abs(p.value) * (1 - p.confidence / 100) * 0.1;
     return { value: p.value, upper: p.value + bandHalf, lower: p.value - bandHalf };

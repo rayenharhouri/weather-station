@@ -1,34 +1,12 @@
-/*
- * WeatherHub ESP32-S3 — BME280 + BH1750 combined test.
- *
- * Both sensors share the external I2C bus (Wire1) — this builds directly
- * on the BME280-only test by adding the lux sensor onto the same two
- * wires. Still no OLED, no rain gauge, no WiFi.
- *
- * Wiring (per the WeatherHub wiring schema — see sanity.cpp):
- *
- *   Shared bus:
- *     3V3     -> BME280 VCC, BME280 CS, BH1750 VCC
- *     GND     -> BME280 GND, BME280 ADDR, BH1750 GND
- *     GPIO 41 -> BME280 SDA, BH1750 SDA
- *     GPIO 42 -> BME280 SCL, BH1750 SCL
- *
- *   BME280 ADDR -> GND       selects 0x76
- *   BH1750 ADDR -> floating  selects 0x23 (tie to 3V3 for 0x5C instead)
- *
- *   pio run -e bme-bh1750-test -t upload
- *   pio device monitor
- */
 
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BME280.h>
 #include <BH1750.h>
 
-// ─── Pinout — external sensor bus (Wire1), matches sanity.cpp ──────
 static constexpr uint8_t SENSOR_SDA = 41;
 static constexpr uint8_t SENSOR_SCL = 42;
-static constexpr uint32_t SENSOR_I2C_HZ = 100000;   // 100 kHz, safest
+static constexpr uint32_t SENSOR_I2C_HZ = 100000;
 
 static constexpr uint8_t BME280_ADDR_PRIMARY   = 0x76;
 static constexpr uint8_t BME280_ADDR_ALTERNATE = 0x77;
@@ -67,9 +45,6 @@ static bool tryBh1750() {
   return false;
 }
 
-// Walks every 7-bit I2C address — with both sensors wired correctly this
-// should report exactly 2 devices (0x76 + 0x23). One missing means that
-// sensor's wiring, not the driver, is the problem.
 static void scanBus() {
   Serial.print("[i2c] scanning Wire1... ");
   uint8_t found = 0;
@@ -88,7 +63,7 @@ static void scanBus() {
 
 void setup() {
   Serial.begin(115200);
-  delay(800);   // let USB-CDC enumerate before we start printing
+  delay(800);
 
   Serial.println();
   Serial.println("=====================================");
@@ -145,7 +120,7 @@ void loop() {
   if (bmeOk) {
     t = bme.readTemperature();
     h = bme.readHumidity();
-    p = bme.readPressure() / 100.0f;   // Pa -> hPa
+    p = bme.readPressure() / 100.0f;
     if (isnan(t) || isnan(h) || isnan(p)) {
       Serial.println("[bme280] read returned NaN — sensor may have dropped off");
       bmeOk = false;

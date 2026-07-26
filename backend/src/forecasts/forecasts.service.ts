@@ -5,17 +5,8 @@ import { WeatherReading } from '../readings/entities/weather-reading.entity';
 import { Forecast, ForecastHorizon } from './entities/forecast.entity';
 import { project } from './projector';
 
-/**
- * How long a cached forecast stays fresh before we recompute. 10 minutes is
- * a reasonable trade-off: fresh enough for the dashboard's auto-refresh
- * (every 10 min), cheap enough to keep DB writes minimal.
- */
 const STALE_AFTER_MS = 10 * 60_000;
 
-/**
- * How much history the projector consumes. Six hours of readings gives the
- * linear fit enough signal without letting old weather dominate the trend.
- */
 const HISTORY_WINDOW_MS = 6 * 60 * 60_000;
 
 @Injectable()
@@ -34,10 +25,6 @@ export class ForecastsService {
     return ds.getRepository(WeatherReading);
   }
 
-  /**
-   * Returns a forecast for `(stationId, horizon)`, recomputing if the
-   * cached row is older than `STALE_AFTER_MS` or absent entirely.
-   */
   async getOrCompute(
     tenantSlug: string,
     stationId: string,

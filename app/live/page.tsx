@@ -47,7 +47,6 @@ function LiveContent() {
   const station = stationsData?.items[0];
   const stationId = station?.id ?? 'station-001';
 
-  // Seed the buffer with recent history so the charts have a shape before SSE catches up.
   const { data: seedData } = useQuery({
     queryKey: ['live-seed', stationId],
     queryFn: () => {
@@ -68,14 +67,12 @@ function LiveContent() {
     if (seedData?.items && readings.length === 0) {
       setReadings(seedData.items.slice(-BUFFER_LENGTH));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedData]);
 
   const onLive = useCallback(
     (r: WeatherReading) => {
       if (isPaused) return;
       setReadings((prev) => [...prev, r].slice(-BUFFER_LENGTH));
-      // Approximate throughput — payload bytes is a rough estimate per reading.
       bytesRef.current += approxBytes(r);
       msgsRef.current += 1;
     },
@@ -84,8 +81,6 @@ function LiveContent() {
 
   const { isConnected, pause, resume } = useLiveReadings(stationId, onLive);
 
-  // Lift live state to the operations topbar so its LiveDot reflects the
-  // SSE stream this page is consuming.
   const latestSyncAt =
     readings.length > 0
       ? readings[readings.length - 1].receivedAt ?? readings[readings.length - 1].recordedAt
@@ -96,7 +91,6 @@ function LiveContent() {
     detail: throughput.msgsPerSec > 0 ? `${throughput.msgsPerSec} msg/s` : null,
   });
 
-  // Throughput sampler — flushes bytes/msg counters every second.
   useEffect(() => {
     const t = window.setInterval(() => {
       setThroughput({ bytesPerSec: bytesRef.current, msgsPerSec: msgsRef.current });
@@ -116,7 +110,6 @@ function LiveContent() {
     setIsSnapping(true);
     setSnapshotError(null);
 
-    // Pause the .live-dot animation so the export captures a deterministic frame.
     document.documentElement.classList.add('snap-freeze');
 
     try {
@@ -355,7 +348,6 @@ function dirOf(series: number[]): 'up' | 'down' | 'flat' {
 }
 
 function approxBytes(r: WeatherReading): number {
-  // Rough JSON payload size — used for "throughput" without measuring the actual wire.
   return JSON.stringify(r).length;
 }
 

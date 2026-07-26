@@ -14,11 +14,6 @@ export interface EndpointBarProps {
   lastRunStatus?: string;
 }
 
-/**
- * The endpoint picker that sits above the params + response split. Today
- * it shows a fixed method/path pair; clicking either chevron is a no-op
- * (a real picker comes when more endpoints are exposed in the playground).
- */
 export function EndpointBar({
   method = 'GET',
   baseUrl = 'https://research.weatherhub.tn',

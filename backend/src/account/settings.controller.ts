@@ -8,12 +8,6 @@ import { Tenant } from '../tenancy/entities/tenant.entity';
 import { AccountService, SettingsSnapshot } from './account.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 
-/**
- * Operations-side `/settings/preferences` endpoint. JWT auth — the same
- * session the user is logged in with on the operations dashboard. Reads
- * and writes the same row as `/v1/account` (token-auth) but exposes a
- * different projection (operations notifications + alert thresholds).
- */
 @UseGuards(JwtAuthGuard)
 @ApiTags('settings')
 @ApiBearerAuth('jwt')

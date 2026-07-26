@@ -5,16 +5,6 @@ import { ApiToken } from '../../tokens/entities/api-token.entity';
 import { Grant } from '../../grants/entities/grant.entity';
 import { User } from '../entities/user.entity';
 
-/**
- * Unit tests for the cross-tenant branches added in TokenAuthGuard.
- *
- * The guard depends on a `TenantService` for both `getDataSource` and
- * `listActive`. We mock both with a small fake registry so we can drive
- * every branch — home-tenant hit, cross-tenant hit with active grant,
- * cross-tenant hit without grant, cross-tenant hit on a non-GET method,
- * and the no-cross-tenant-flag case.
- */
-
 function makeToken(overrides: Partial<ApiToken> = {}): ApiToken {
   return {
     id: 't1',

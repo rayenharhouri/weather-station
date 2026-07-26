@@ -9,11 +9,6 @@ import { TenantService } from '../tenancy/tenant.service';
 import { Grant } from './entities/grant.entity';
 import { RequestGrantDto } from './dto/grants.dto';
 
-/**
- * Shape returned to the *target* tenant's admin when listing incoming
- * grants. Carries the home tenant slug alongside the grant row so the
- * admin endpoint knows which tenant DB to write back to on approval.
- */
 export interface IncomingGrant {
   homeTenantSlug: string;
   grant: Grant;
@@ -38,12 +33,6 @@ export class GrantsService {
     });
   }
 
-  /**
-   * Create a new cross-tenant grant request. Approval is a manual flow
-   * handled by the *target* tenant's admin — this endpoint just lodges
-   * the request as `pending`. Phase 5+ adds the admin surface that flips
-   * it to `active` or revokes it.
-   */
   async request(
     tenantSlug: string,
     userId: string,
@@ -70,7 +59,6 @@ export class GrantsService {
     const grant = await repo.findOne({ where: { id: grantId } });
     if (!grant) throw new NotFoundException(`Grant '${grantId}' not found`);
     if (grant.userId !== userId) {
-      // Don't leak existence to other users.
       throw new NotFoundException(`Grant '${grantId}' not found`);
     }
     if (grant.status === 'revoked') return grant;
@@ -79,18 +67,6 @@ export class GrantsService {
     return repo.save(grant);
   }
 
-  // ─── Admin-side: incoming grants (target tenant) ────────────────
-
-  /**
-   * Find every grant row across all other active tenants that names
-   * `targetSlug` as the target — the inbox for that tenant's admin.
-   * Returns the row plus its home tenant slug so callers know where to
-   * write back on approve/revoke.
-   *
-   * Scans every active tenant's `grants` table. Single-instance OK for the
-   * MVP; if tenant count grows past a few dozen we'd index a global table
-   * instead of scanning.
-   */
   async listIncomingFor(targetSlug: string): Promise<IncomingGrant[]> {
     const tenants = await this.tenantService.listActive();
     const out: IncomingGrant[] = [];
@@ -114,16 +90,6 @@ export class GrantsService {
     return out;
   }
 
-  /**
-   * Flip an incoming grant to `active`. The grant row lives in the home
-   * tenant's DB (the side that requested it) — we write back there.
-   * Idempotent: already-active rows are returned unchanged.
-   *
-   * The caller must hold the *target* tenant's admin role; routes enforce
-   * that via `RolesGuard`. This method assumes the authorisation has
-   * already happened and only validates that the grant in fact targets
-   * the calling tenant (`targetSlug`).
-   */
   async approveIncoming(
     homeSlug: string,
     grantId: string,
@@ -133,7 +99,6 @@ export class GrantsService {
     const grant = await repo.findOne({ where: { id: grantId } });
     if (!grant) throw new NotFoundException(`Grant '${grantId}' not found`);
     if (grant.targetTenantSlug !== targetSlug) {
-      // Wrong tenant trying to approve someone else's incoming row.
       throw new ForbiddenException('not_grant_target');
     }
     if (grant.status === 'active') return grant;

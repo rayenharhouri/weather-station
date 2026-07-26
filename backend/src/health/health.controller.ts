@@ -23,10 +23,6 @@ export class HealthController {
     private readonly config: ConfigService,
   ) {}
 
-  /**
-   * Liveness probe. Cheap — never blocks on dependencies. Indicates the
-   * process is up and the event loop is responsive. Returns 200 always.
-   */
   @ApiOperation({ summary: "Liveness probe — never blocks on dependencies." })
   @Get('health')
   ping() {
@@ -38,14 +34,6 @@ export class HealthController {
     };
   }
 
-  /**
-   * Readiness probe. Hits the master DB and confirms migrations have run.
-   * Returns 503 when any required check fails.
-   *
-   * Per-tenant DB checks are intentionally omitted — a single tenant DB
-   * being down should fail individual requests, not flip the whole pod
-   * to Not-Ready.
-   */
   @ApiOperation({ summary: "Readiness probe — master DB + migrations check; 503 when degraded." })
   @Get('ready')
   async ready() {
@@ -70,9 +58,6 @@ export class HealthController {
 
     if (report.checks.masterDb) {
       try {
-        // The `master_migrations` table is created by TypeORM on first
-        // `migration:run` (custom name from `master-data-source.ts`). Its
-        // absence means the master DB hasn't been bootstrapped yet.
         const rows: Array<{ exists: boolean }> = await this.masterDs.query(
           `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'master_migrations') AS exists`,
         );

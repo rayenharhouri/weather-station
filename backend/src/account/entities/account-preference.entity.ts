@@ -17,17 +17,6 @@ export interface NotificationPreferences {
   grantUpdates: boolean;
 }
 
-/**
- * Per-user copy of the operations alert thresholds — the values that
- * power the `/settings` page sliders. Stored as numbers (rather than the
- * page's display strings) so the API surface is canonical regardless of
- * locale.
- *
- * The global `evaluateReading` rule table in
- * [threshold-evaluator.ts](../../alerts/threshold-evaluator.ts) does not
- * read from here yet — Phase 5+ wires per-user overrides into the
- * evaluator. Until then this is a UX-only knob.
- */
 export interface AlertThresholds {
   tempCriticalC: number;
   humidityWarnPct: number;
@@ -41,14 +30,6 @@ export interface OpsNotificationPreferences {
   weeklyReport: boolean;
 }
 
-/**
- * Per-user preferences for the researcher portal. Lives in the tenant DB,
- * one row per user. Missing rows are returned as defaults by
- * `AccountService.get()` — we only persist on first PATCH.
- *
- * Profile fields (name, email) stay on `users` and are served by `/v1/me`.
- * This entity holds only what the user can change from `/research/account`.
- */
 @Entity({ name: 'account_preferences' })
 export class AccountPreference {
   @PrimaryGeneratedColumn('uuid')
@@ -67,7 +48,6 @@ export class AccountPreference {
   @Column({ type: 'boolean', default: true })
   autoCite!: boolean;
 
-  /** Token the user is currently "acting as" — follows them across devices. */
   @Column({ type: 'uuid', nullable: true })
   activeTokenId!: string | null;
 

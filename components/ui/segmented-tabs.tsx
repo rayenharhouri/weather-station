@@ -2,11 +2,6 @@
 
 import * as React from 'react';
 
-/**
- * Bordered segmented control. Used for status tabs ("Active / Resolved / All")
- * and time-range pickers. Renders as `<div role="tablist">` with `aria-pressed`
- * on each option so keyboard + screen reader users get the right cues.
- */
 export interface SegmentedTabsOption<T extends string> {
   value: T;
   label: string;

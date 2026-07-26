@@ -83,16 +83,6 @@ export class IntegrityService {
     return batch;
   }
 
-  /**
-   * Verify a single record:
-   *  1. Re-hash the live row, compare to the leaf hash we'd compute today.
-   *  2. Find the batch covering the row's `recordedAt`.
-   *  3. Rebuild the inclusion proof from current batch leaves and confirm
-   *     it reconstructs the stored `merkleRoot`.
-   *
-   * Any mismatch downgrades `hashMatch` or `batchMembership` and leaves a
-   * human-readable `verificationMessage` for the UI to surface.
-   */
   async verifyRecord(
     tenantSlug: string,
     recordId: string,
@@ -173,10 +163,6 @@ export class IntegrityService {
     };
   }
 
-  /**
-   * Verify a batch by rebuilding its Merkle root from current readings and
-   * comparing to the stored value. Updates `verifiedAt` on success.
-   */
   async verifyBatch(tenantSlug: string, batchId: string): Promise<IntegrityBatch> {
     const batchRepo = await this.batchRepo(tenantSlug);
     const batch = await this.getBatch(tenantSlug, batchId);
@@ -191,22 +177,12 @@ export class IntegrityService {
       this.logger.warn(
         `[${tenantSlug}] batch ${batchId} root mismatch — stored=${batch.merkleRoot} recomputed=${recomputed}`,
       );
-      // Leave the row as-is; the mismatch IS the result. UI reads
-      // `mirrorNodeVerified` + `verifiedAt` to display state.
       return batch;
     }
     batch.verifiedAt = new Date();
     return batchRepo.save(batch);
   }
 
-  /**
-   * Create a new batch covering every reading from `(previousEnd, now]`.
-   * Returns the persisted batch with Hedera anchor populated. If there are
-   * no new readings to anchor, returns null.
-   *
-   * Phase 1.4 exposes this for tests + the on-demand `POST /integrity/batches`
-   * path used by the demo seed. The cron-driven trigger lives in Phase 5.4.
-   */
   async createBatch(
     tenantSlug: string,
     stationId: string,

@@ -5,15 +5,9 @@ import type { WeatherReading } from '@/types';
 
 interface StreamTapeProps {
   readings: WeatherReading[];
-  /** How many rows to keep visible at most. */
   maxRows?: number;
 }
 
-/**
- * The scrolling reading log on the right side of the Live page. Most-recent
- * reading at the top; rows hairline-separated. Designed to feel like a
- * trading tape — quiet, monospaced, every column tabular-aligned.
- */
 export function StreamTape({ readings, maxRows = 40 }: StreamTapeProps) {
   const shown = readings.slice(-maxRows).reverse();
 

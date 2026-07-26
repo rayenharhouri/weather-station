@@ -89,7 +89,6 @@ export default function AccountPage() {
   const queryClient = useQueryClient();
   const { active: activeStored, setActive } = useActiveToken();
 
-  // ─── Server data ────────────────────────────────────────────────
   const { data: tokensPage } = useQuery({
     queryKey: ['v1.tokens'],
     queryFn: () => tokenService.list(),
@@ -120,7 +119,6 @@ export default function AccountPage() {
     staleTime: 60_000,
   });
 
-  // ─── Local state mirrored from server (so toggles feel instant) ─
   const [activeTokenId, setActiveTokenId] = useState<string>('');
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>({
     weeklyDigest: true,
@@ -134,9 +132,6 @@ export default function AccountPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  // Seed local mirrors when the server payload arrives. The local-token
-  // pick (from `useActiveToken`) wins for the topbar chip even before the
-  // server round-trip lands, so the experience is snappy.
   useEffect(() => {
     if (!account) return;
     setNotifPrefs(account.notifications);
@@ -159,7 +154,6 @@ export default function AccountPage() {
     [activeTokenId, AVAILABLE_TOKENS],
   );
 
-  // ─── Mutations ──────────────────────────────────────────────────
   const patchAccount = useMutation({
     mutationFn: accountService.patch,
     onSuccess: (next) => {
@@ -177,13 +171,8 @@ export default function AccountPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['v1.grants'] }),
   });
 
-  // ─── Handlers ───────────────────────────────────────────────────
   const handlePickActiveToken = (tokenId: string) => {
     setActiveTokenId(tokenId);
-    // Local mirror: the id propagates immediately to the topbar chip + any
-    // other consumer of `useActiveToken`. Plaintext is unchanged — picking
-    // an existing token doesn't authenticate /v1/* calls until the user
-    // (re)mints + saves the plaintext via the new-token dialog.
     setActive({ id: tokenId, plaintext: activeStored.plaintext });
     patchAccount.mutate({ activeTokenId: tokenId });
   };
@@ -213,7 +202,6 @@ export default function AccountPage() {
   };
 
   const handleRequestGrant = () => {
-    // Minimal prompt-based flow; a proper modal is a future polish task.
     const targetTenant = window.prompt('Target tenant slug (e.g. esprit)');
     if (!targetTenant) return;
     const scope = window.prompt('Scope description');
@@ -541,9 +529,6 @@ export default function AccountPage() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Inline subcomponents
-// ─────────────────────────────────────────────────────────────
 function PageHeader() {
   return (
     <div className="flex items-end justify-between flex-wrap gap-2">

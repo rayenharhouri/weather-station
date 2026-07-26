@@ -19,14 +19,6 @@ import { WeatherReading } from '../readings/entities/weather-reading.entity';
 import { V1ReadingsQueryDto, V1Metric, V1_METRICS } from './dto/readings-query.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
-/**
- * Maps each v1 metric name to:
- *   - the WeatherReading column carrying its value
- *   - the SI / API unit string the docs promise
- *
- * Keeping the mapping in one place means adding a new sensor only touches
- * this table + the entity + the docs page.
- */
 const METRIC_MAPPING: Record<V1Metric, { field: keyof WeatherReading; unit: string }> = {
   temperature: { field: 'temperatureC', unit: 'celsius' },
   humidity: { field: 'humidityPct', unit: 'percent' },
@@ -114,18 +106,6 @@ export class ResearchReadingsController {
     return { data, next_cursor };
   }
 
-  /**
-   * Live readings stream for the requested `(station, metric)` pair.
-   *
-   * Browser EventSource clients can't set custom headers, so the bearer is
-   * accepted from `?token=` (handled in `TokenAuthGuard`). Server-side
-   * clients should keep passing `Authorization: Bearer …` since query
-   * tokens leak more readily through logs.
-   *
-   * Events that don't carry a value for the requested metric (e.g. a
-   * battery-only ping when the client asked for `temperature`) are
-   * filtered out — the SDK shouldn't have to handle empty value frames.
-   */
   @ApiOperation({ summary: "SSE readings (header bearer or ?token= for EventSource)." })
   @Sse('readings/stream')
   stream(
@@ -151,16 +131,12 @@ export class ResearchReadingsController {
 function enforceScope(token: ApiToken, query: V1ReadingsQueryDto): void {
   const { scope } = token;
 
-  // Station scope: empty array = "home tenant, all stations"; `*` = any
-  // station (cross-tenant aware); otherwise must be an explicit match.
   if (scope.stations.length > 0 && !scope.stations.includes('*')) {
     if (!scope.stations.includes(query.station)) {
       throw new ForbiddenException('station_out_of_scope');
     }
   }
 
-  // Cross-tenant access requires the marker bit. We don't have grant
-  // enforcement wired yet; this is a structural check until then.
   if (scope.stations.includes('*') && !scope.crossTenant) {
     throw new ForbiddenException('cross_tenant_denied');
   }
@@ -176,9 +152,6 @@ function toV1Reading(
   value: number,
   unit: string,
 ): V1Reading {
-  // Aggregated rows from `time_bucket()` come back with synthetic ids
-  // (`agg-0`, `agg-1`, ...); leave them as-is — the docs explain that
-  // aggregated rows aren't individually verifiable against Hedera.
   const isAggregated = row.id.startsWith('agg-');
   const recordedAt =
     typeof row.recordedAt === 'string'
@@ -193,9 +166,6 @@ function toV1Reading(
     value,
     unit,
     recorded_at: recordedAt,
-    // Real anchor wiring lands when the integrity batcher writes batch ids
-    // back onto readings. Until then, aggregates are explicitly null;
-    // raw readings expose null too so clients learn to handle it.
     merkle_anchor: isAggregated ? null : null,
   };
 }

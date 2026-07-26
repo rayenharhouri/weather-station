@@ -2,8 +2,6 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateReadings1731600300000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Composite PK (id, recordedAt) is required by Timescale — the partition
-    // key must appear in any UNIQUE constraint or PRIMARY KEY.
     await queryRunner.query(`
       CREATE TABLE "readings" (
         "id" UUID NOT NULL DEFAULT uuid_generate_v4(),

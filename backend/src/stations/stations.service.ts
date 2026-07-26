@@ -26,10 +26,6 @@ export class StationsService {
     return station;
   }
 
-  /**
-   * Refresh `lastSyncedAt` and roll the status based on most recent reading.
-   * Called from the readings service whenever a reading is persisted.
-   */
   async touchLastSync(tenantSlug: string, stationId: string, when: Date): Promise<void> {
     const repo = await this.repo(tenantSlug);
     await repo.update({ id: stationId }, { lastSyncedAt: when, status: 'online' });

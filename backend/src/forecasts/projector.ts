@@ -11,9 +11,7 @@ const METRIC_FIELD: Record<ProjectedMetric, keyof WeatherReading> = {
 };
 
 interface HorizonSpec {
-  /** Total span we project forward, in minutes. */
   spanMinutes: number;
-  /** Cadence of projection samples, in minutes. */
   stepMinutes: number;
 }
 
@@ -30,18 +28,6 @@ export interface ProjectionResult {
   explanation: string;
 }
 
-/**
- * Project the next N readings for a station using simple statistics.
- *
- * - temperature / humidity / pressure: ordinary least-squares linear fit
- *   over the input history; projected forward at the horizon's cadence.
- *   Confidence comes from the fit's R² (clamped 30–95%).
- * - rainfall: the field is mostly zero, so a regression overshoots wildly.
- *   We use the recent mean instead, with confidence anchored to "how
- *   stable was the recent past." Phase 5+ can swap in a real model.
- *
- * `history` should be ordered oldest-first. We tolerate gaps and nulls.
- */
 export function project(history: WeatherReading[], horizon: ForecastHorizon): ProjectionResult {
   const spec = HORIZON[horizon];
   const samples = Math.max(1, Math.floor(spec.spanMinutes / spec.stepMinutes));
@@ -56,9 +42,6 @@ export function project(history: WeatherReading[], horizon: ForecastHorizon): Pr
       .filter((p): p is { t: number; y: number } => p.y != null && Number.isFinite(p.y));
 
     if (series.length < 3) {
-      // Not enough data — emit a flat projection at the most recent value
-      // (or zero if we have nothing at all) with floor-confidence so the UI
-      // can still render a line.
       const last = series[series.length - 1]?.y ?? 0;
       const baseConfidence = 30;
       perMetricConfidence.push(baseConfidence);
@@ -74,8 +57,6 @@ export function project(history: WeatherReading[], horizon: ForecastHorizon): Pr
     }
 
     if (metric === 'rainfall') {
-      // Recent mean rather than regression — rainfall is sparse and
-      // sub-zero predictions are nonsensical.
       const recent = series.slice(-Math.min(series.length, 24));
       const mean = average(recent.map((p) => p.y));
       const variability = stddev(recent.map((p) => p.y));
@@ -98,8 +79,6 @@ export function project(history: WeatherReading[], horizon: ForecastHorizon): Pr
     for (let i = 1; i <= samples; i++) {
       const t = now.getTime() + i * spec.stepMinutes * 60_000;
       const predicted = fit.a + fit.b * t;
-      // Confidence decays with horizon distance — model trust is highest
-      // a few steps out, falls off the further we extrapolate.
       const decay = 1 - (i / samples) * 0.25;
       items.push({
         timestamp: new Date(t).toISOString(),
@@ -124,7 +103,6 @@ interface FitResult {
   rSquared: number;
 }
 
-/** Ordinary least squares fit `y = a + b*t`. */
 function linearFit(points: Array<{ t: number; y: number }>): FitResult {
   const n = points.length;
   let sumT = 0,

@@ -77,9 +77,6 @@ export default function ExportsPage() {
   const { data: rows = [] } = useQuery({
     queryKey: ['v1.exports'],
     queryFn: () => exportService.list(),
-    // Poll while any job is in-flight. The query function doesn't know
-    // about its previous state, so we always poll at 3s when there's any
-    // chance a status is changing — cheap enough.
     refetchInterval: (q) => {
       const data = q.state.data as ExportResource[] | undefined;
       const hasActive = data?.some((j) => j.status === 'queued' || j.status === 'running');
@@ -87,9 +84,6 @@ export default function ExportsPage() {
     },
   });
 
-  // Adapt the service shape to the local ExportJob the UI was built around.
-  // Both shapes are nearly identical — we just need a typed re-cast for the
-  // `metric`/`format`/`status` literal unions.
   const jobs: ExportJob[] = useMemo(
     () =>
       rows.map((r) => ({
@@ -140,8 +134,6 @@ export default function ExportsPage() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['v1.exports'] });
 
-  // Retry semantics: the backend doesn't reset a failed job in place —
-  // re-queue with the same query params and let the worker pick it up.
   const retryMutation = useMutation({
     mutationFn: async (job: ExportJob) =>
       exportService.create({
@@ -288,9 +280,6 @@ function TableHead() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Job row
-// ─────────────────────────────────────────────────────────────
 function ExportJobRow({
   job,
   onRetry,
@@ -531,18 +520,11 @@ function EmptyState({ tab }: { tab: Tab }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────
 function downloadUrl(job: ExportJob): string {
   return exportService.downloadHref(job.id);
 }
 
 function downloadStub(job: ExportJob): void {
-  // Backend serves the materialised file at `/v1/exports/:id/download`.
-  // Token auth on `/v1/*` would normally require an `Authorization` header,
-  // so direct anchor downloads don't work — we fetch + blob-url instead so
-  // the active API token rides along.
   if (typeof window === 'undefined') return;
   void streamingDownload(job);
 }
@@ -559,7 +541,6 @@ async function streamingDownload(job: ExportJob): Promise<void> {
     a.remove();
     URL.revokeObjectURL(url);
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('[exports] download failed', err);
     window.alert('Download failed. The token may have expired or the export was cleaned up.');
   }

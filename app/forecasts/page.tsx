@@ -127,7 +127,6 @@ function ForecastsContent() {
   const focusSpec = METRICS.find((m) => m.key === focus)!;
   const currentValue = focusPoints[0]?.value ?? null;
 
-  // Per-metric sparkline data (companion metrics).
   const companions = METRICS.filter((m) => m.key !== focus);
 
   const handleRecompute = () => {

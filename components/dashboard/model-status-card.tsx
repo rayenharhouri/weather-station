@@ -6,15 +6,10 @@ import { Button } from '@/components/ui/button';
 import { LiveDot } from '@/components/dashboard/live-dot';
 
 interface ModelStatusCardProps {
-  /** Display name of the active model (e.g. "arima-15m"). */
   modelName?: string;
-  /** Overall confidence (0–100) reported by the model service. */
   confidence?: number;
-  /** ISO timestamp of the last refresh. */
   lastRefreshAt?: string;
-  /** Per-metric RMSE entries to show as a small key/value column. */
   metricAccuracy?: Array<{ metric: string; rmse: number }>;
-  /** Free-text explanation of the model's current prediction window. */
   explanation?: string;
   onRecompute?: () => void;
   isRecomputing?: boolean;

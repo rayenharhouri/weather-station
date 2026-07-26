@@ -19,7 +19,6 @@ export const useAuth = (): AuthContextType => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth from localStorage and fetch user
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -107,13 +106,11 @@ export const useAuth = (): AuthContextType => {
   };
 };
 
-// Hook for checking if user has specific role
 export const useHasRole = (role: UserRole | UserRole[]): boolean => {
   const { hasRole } = useAuth();
   return hasRole(role);
 };
 
-// Hook for checking if user has permission
 export const useHasPermission = (permission: string): boolean => {
   const { hasPermission } = useAuth();
   return hasPermission(permission);

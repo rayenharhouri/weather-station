@@ -12,11 +12,6 @@ interface ResearchAppShellProps {
   crumbs?: ResearchBreadcrumb[];
 }
 
-/**
- * Shell for the researcher portal. Mirrors the operations `AppShell` but
- * carries a different brand block, breadcrumb, and topbar chrome. Lives
- * under `/research/*`; never wraps operations routes.
- */
 export function ResearchAppShell({ children, crumbs }: ResearchAppShellProps) {
   return (
     <div className="relative flex h-dvh overflow-hidden bg-bg text-fg">

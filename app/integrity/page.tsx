@@ -117,7 +117,6 @@ function PageHeader({ lastAnchorAt }: { lastAnchorAt?: string }) {
 }
 
 function estimateNextAnchor(): string {
-  // Anchor cadence is roughly every 30 minutes. Estimate the next one from "now mod 30m".
   const now = new Date();
   const minutes = now.getMinutes();
   const elapsed = minutes % 30;

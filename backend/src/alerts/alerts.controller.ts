@@ -72,10 +72,6 @@ export class AlertsController {
     return this.alerts.resolve(tenant.slug, id, user.id);
   }
 
-  /**
-   * SSE stream of new alerts for this tenant. `?stationId=` is an optional
-   * filter — omit it to receive the whole tenant firehose.
-   */
   @ApiOperation({ summary: "SSE stream of new alerts for this tenant." })
   @Sse('stream')
   streamAlerts(

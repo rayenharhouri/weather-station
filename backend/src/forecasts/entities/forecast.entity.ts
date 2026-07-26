@@ -15,15 +15,6 @@ export interface ForecastItem {
   confidence: number;
 }
 
-/**
- * Cached forecast for one `(station, horizon)` pair. Recomputed lazily by
- * the service when `generatedAt` is older than the staleness window.
- *
- * The shape — `items[]`, `confidence`, `explanation` — mirrors the frontend
- * [ForecastSchema](../../../../lib/validation.ts) so a row can be returned
- * verbatim. Phase 5.6 adds a cron that pre-warms the cache instead of the
- * current on-demand compute.
- */
 @Entity({ name: 'forecasts' })
 @Index('IDX_forecasts_station_horizon', ['stationId', 'horizon'], { unique: true })
 export class Forecast {

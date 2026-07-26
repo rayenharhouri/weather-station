@@ -7,11 +7,6 @@ import { AnchorSchedulerService } from './anchor-scheduler.service';
 import { ForecastSchedulerService } from './forecast-scheduler.service';
 import { TokenSweeperService } from './token-sweeper.service';
 
-/**
- * Bundles the periodic background workers: anchor batcher, forecast
- * pre-warmer, and token expiry sweeper. Each is mode-aware (no-op in
- * `test`) and tick-configurable via env (`*_TICK_MS=0` to disable).
- */
 @Module({
   imports: [TenantModule, StationsModule, ForecastsModule, IntegrityModule],
   providers: [AnchorSchedulerService, ForecastSchedulerService, TokenSweeperService],

@@ -21,9 +21,7 @@ export interface PlaygroundResponse {
   records: number;
   data: PlaygroundResponsePoint[];
   cursor: string | null;
-  /** Used for chart axis labels and the units column. */
   metricLabel: string;
-  /** CSS var for the metric colour. */
   color: string;
 }
 
@@ -194,9 +192,6 @@ function EmptyState({ pending }: { pending?: boolean }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Chart
-// ─────────────────────────────────────────────────────────────
 function ResponseChart({ response }: { response: PlaygroundResponse }) {
   const data = response.data;
   if (data.length < 2) {
@@ -513,9 +508,6 @@ function unitForLabel(label: string): string {
   return '';
 }
 
-// ─────────────────────────────────────────────────────────────
-// CSV export — RFC 4180 + BOM so Excel opens it as UTF-8.
-// ─────────────────────────────────────────────────────────────
 function buildCsv(response: PlaygroundResponse): string {
   const headers = ['recorded_at', 'id', 'metric', 'value', 'unit', 'merkle_anchor'];
   const metricSlug = response.metricLabel.toLowerCase().replace(/\s+/g, '_');
@@ -532,13 +524,11 @@ function buildCsv(response: PlaygroundResponse): string {
       ].join(','),
     );
   }
-  // BOM so spreadsheet apps treat the file as UTF-8.
   return '﻿' + lines.join('\r\n') + '\r\n';
 }
 
 function csvField(value: string | number): string {
   const s = String(value);
-  // Quote if it contains comma, quote, or CR/LF; double internal quotes.
   if (/[",\r\n]/.test(s)) {
     return `"${s.replace(/"/g, '""')}"`;
   }
@@ -571,6 +561,5 @@ function triggerDownload(csv: string, filename: string): void {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  // Revoke on the next tick so Safari has time to grab the blob.
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }

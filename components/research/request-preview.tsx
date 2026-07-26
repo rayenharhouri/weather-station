@@ -17,11 +17,6 @@ interface RequestPreviewProps {
   query: PlaygroundQuery;
 }
 
-/**
- * Collapsible preview at the bottom of the playground. Re-renders whenever
- * any field in `query` changes so the user can see exactly what their form
- * compiles to. Tabs share the same syntax-highlighter as the docs.
- */
 export function RequestPreview({ query }: RequestPreviewProps) {
   const [open, setOpen] = useState(true);
   const [lang, setLang] = useState<Lang>('curl');
@@ -181,7 +176,6 @@ function highlight(text: string, lang: Lang) {
       );
     }
 
-    // simple JS/Python/R highlighter: keywords + strings
     const kwRe =
       lang === 'python'
         ? /\b(from|import|def|class|return|None|True|False)\b/g

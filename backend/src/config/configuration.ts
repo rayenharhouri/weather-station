@@ -9,8 +9,6 @@ function readMode(): RunMode {
   if (VALID_MODES.has(raw as RunMode)) {
     return raw as RunMode;
   }
-  // Fail-stop on a typo so we don't accidentally boot production with dummy
-  // data because someone wrote WH_MODE=Prod.
   throw new Error(
     `Invalid WH_MODE='${raw}'. Allowed values: production | demo | test.`,
   );
@@ -60,37 +58,24 @@ export const loadConfig = () => ({
     network: process.env.HEDERA_NETWORK ?? 'testnet',
     operatorAccountId: process.env.HEDERA_OPERATOR_ACCOUNT_ID,
     operatorPrivateKey: process.env.HEDERA_OPERATOR_PRIVATE_KEY,
-    /** Single shared topic id (Phase 5.5). When unset the adapter creates a
-     * topic on first use and logs the id so it can be persisted to env. */
     topicId: process.env.HEDERA_TOPIC_ID,
   },
 
   schedulers: {
-    /** Anchor scheduler tick. 0 disables. */
     anchorTickMs: parseInt(process.env.ANCHOR_SCHEDULER_TICK_MS ?? '300000', 10),
-    /** Forecast pre-warm tick. 0 disables. */
     forecastTickMs: parseInt(process.env.FORECAST_SCHEDULER_TICK_MS ?? '600000', 10),
-    /** Token expiry sweeper tick. 0 disables. */
     tokenSweeperTickMs: parseInt(process.env.TOKEN_SWEEPER_TICK_MS ?? '3600000', 10),
   },
 
   exports: {
-    /** Local directory where materialised export files land. */
     root: process.env.EXPORTS_ROOT ?? '/tmp/wh-exports',
-    /** How long a ready export stays downloadable. */
     ttlHours: parseInt(process.env.EXPORTS_TTL_HOURS ?? '168', 10),
-    /** Worker tick interval. Set to 0 to disable in tests. */
     workerTickMs: parseInt(process.env.EXPORTS_WORKER_TICK_MS ?? '5000', 10),
   },
 });
 
 export const configuration = () => loadConfig();
 
-/**
- * Production guardrails. Throws on boot if the config indicates production
- * but a sensitive value is still at its dev default. Called from main.ts
- * after the ConfigService is initialised.
- */
 export function assertProductionSecrets(config: AppConfig): void {
   if (config.mode !== 'production') return;
   const violations: string[] = [];

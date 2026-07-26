@@ -38,9 +38,7 @@ export interface Dataset {
   sizeBytes: number;
   formats: DatasetFormat[];
   updatedAt: string;
-  /** DOI / formal citation string (public datasets only). */
   citation?: string;
-  /** Optional Playground URL — opens with these query params pre-filled. */
   playgroundHref?: string;
 }
 

@@ -33,7 +33,6 @@ export class CreateApiTokens1731600400000 implements MigrationInterface {
       true,
     );
 
-    // Unique index on hashedToken so verifying an incoming bearer is O(1).
     await queryRunner.createIndex(
       'api_tokens',
       new TableIndex({
@@ -43,7 +42,6 @@ export class CreateApiTokens1731600400000 implements MigrationInterface {
       }),
     );
 
-    // Non-unique index on userId for fast list-by-user.
     await queryRunner.createIndex(
       'api_tokens',
       new TableIndex({

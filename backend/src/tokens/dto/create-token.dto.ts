@@ -39,7 +39,6 @@ export class CreateTokenDto {
   @Type(() => CreateTokenScopeDto)
   scope?: CreateTokenScopeDto;
 
-  /** '30d' | '90d' | '365d' | 'never'. Anything else falls back to '90d'. */
   @IsOptional()
   @IsIn(['30d', '90d', '365d', 'never'])
   expiry?: '30d' | '90d' | '365d' | 'never';

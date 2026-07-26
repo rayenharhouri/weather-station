@@ -3,10 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-/**
- * Sidebar brand block — logo, product name, and the tenant's hostname.
- * Renders as a quiet text pair, no animation, no decorative hover state.
- */
 export function BrandBlock({ tenantHost }: { tenantHost: string }) {
   return (
     <Link

@@ -5,13 +5,10 @@ import { ApiToken } from '../tokens/entities/api-token.entity';
 import { RequestLog } from './entities/request-log.entity';
 import { UsageRange } from './dto/usage-query.dto';
 
-/** Per-tenant daily quota (per token). Mirrors the docs page literally. */
 const DAILY_QUOTA = 10_000;
 
 export interface UsageBucket {
-  /** ISO timestamp at the start of the bucket. */
   bucketStart: string;
-  /** Per-token call counts. Tokens absent from this bucket are omitted. */
   byToken: Record<string, number>;
 }
 
@@ -54,7 +51,6 @@ const RANGE_HOURS: Record<UsageRange, number> = {
   '30d': 30 * 24,
 };
 
-/** Bucket width as a Postgres interval string. */
 const RANGE_BUCKET: Record<UsageRange, string> = {
   '24h': '1 hour',
   '7d': '6 hours',
@@ -75,10 +71,6 @@ export class UsageService {
     return ds.getRepository(ApiToken);
   }
 
-  /**
-   * Aggregate usage for the given range, scoped to the calling user's
-   * tokens so a researcher can't see another researcher's traffic.
-   */
   async summary(
     tenantSlug: string,
     userId: string,
@@ -97,7 +89,6 @@ export class UsageService {
     const tokenIds = ownedTokens.map((t) => t.id);
     const ds = await this.tenantService.getDataSource(tenantSlug);
 
-    // Top-line totals + latency percentiles, single round-trip.
     const totalsRow = await ds.query(
       `SELECT
          count(*)::int AS total,
@@ -115,7 +106,6 @@ export class UsageService {
     const totalCalls = t.total ?? 0;
     const errorCount = t.errors ?? 0;
 
-    // Prior-period total for delta — same range, immediately preceding.
     const priorRow = await ds.query(
       `SELECT count(*)::int AS total FROM "request_logs"
        WHERE "tokenId" = ANY($1)
@@ -125,8 +115,6 @@ export class UsageService {
     const priorTotal = priorRow[0]?.total ?? 0;
     const callsDeltaPct = priorTotal === 0 ? 0 : Math.round(((totalCalls - priorTotal) / priorTotal) * 100);
 
-    // Bucketed counts per token. `to_timestamp(floor(epoch / N) * N)` floors
-    // each row to its bucket origin — works cleanly for any N (hours, 6h, day).
     const bucketRows = await ds.query(
       `SELECT
          to_timestamp(floor(extract(epoch FROM "timestamp") / $4) * $4) AS bucket_start,
@@ -142,7 +130,6 @@ export class UsageService {
 
     const buckets = collapseBuckets(bucketRows);
 
-    // Top endpoints.
     const endpointRows = await ds.query(
       `SELECT
          "path",
@@ -164,8 +151,6 @@ export class UsageService {
       errorRatePct: r.calls > 0 ? (r.errors / r.calls) * 100 : 0,
     }));
 
-    // Per-token rows. Two queries (range + today) because the today slice
-    // needs to recompute even when range='24h'.
     const perTokenRangeRows = await ds.query(
       `SELECT
          "tokenId",
@@ -210,8 +195,6 @@ export class UsageService {
       };
     });
 
-    // Quota uses the most-active token "today" as the reference — same as
-    // the dashboard's KPI strip.
     const topTokenToday = tokens.reduce(
       (max, t) => (t.callsToday > max ? t.callsToday : max),
       0,

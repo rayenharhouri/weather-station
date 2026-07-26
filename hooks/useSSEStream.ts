@@ -19,22 +19,26 @@ export const useSSEStream = <T,>(
   const mockIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const startMockTicker = useCallback(() => {
+    setIsConnected(true);
+    mockIntervalRef.current = setInterval(() => {
+      const mockData = endpoint.includes('readings') ? generateMockSSEReadings() : generateMockSSEAlert();
+      onMessage(mockData as T);
+    }, 2000);
+  }, [endpoint, onMessage]);
+
   const connect = useCallback(() => {
-    if (!enabled || config.mode !== 'production') {
-      // Mock mode: generate fake data at intervals. In `production` mode
-      // we always connect to the real SSE endpoint and surface errors;
-      // demo + test both fall back to the synthetic generator.
-      setIsConnected(true);
-      mockIntervalRef.current = setInterval(() => {
-        const mockData = endpoint.includes('readings') ? generateMockSSEReadings() : generateMockSSEAlert();
-        onMessage(mockData as T);
-      }, 2000);
+    if (!enabled) return;
+
+    if (config.mode === 'test') {
+      startMockTicker();
       return;
     }
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('weather_station_auth_token') : null;
-      const url = token ? `${config.apiUrl}${endpoint}?token=${token}` : `${config.apiUrl}${endpoint}`;
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const url = token ? `${config.apiUrl}${endpoint}${separator}token=${token}` : `${config.apiUrl}${endpoint}`;
       
       const eventSource = new EventSource(url);
 
@@ -55,11 +59,14 @@ export const useSSEStream = <T,>(
         console.error('SSE connection error:', error);
         setIsConnected(false);
         eventSource.close();
-        
-        // Attempt to reconnect after delay
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connect();
-        }, 5000);
+
+        if (config.mode === 'demo') {
+          startMockTicker();
+        } else {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, 5000);
+        }
 
         if (onError) {
           onError(new Error('SSE connection failed'));
@@ -69,11 +76,14 @@ export const useSSEStream = <T,>(
       eventSourceRef.current = eventSource;
     } catch (error) {
       console.error('Failed to establish SSE connection:', error);
+      if (config.mode === 'demo') {
+        startMockTicker();
+      }
       if (onError && error instanceof Error) {
         onError(error);
       }
     }
-  }, [endpoint, enabled, onMessage, onError]);
+  }, [endpoint, enabled, onMessage, onError, startMockTicker]);
 
   const disconnect = useCallback(() => {
     if (eventSourceRef.current) {
@@ -126,7 +136,6 @@ export const useSSEStream = <T,>(
   };
 };
 
-// Specific hook for live readings
 export const useLiveReadings = (stationId: string, onReading: (reading: WeatherReading) => void) => {
   return useSSEStream<WeatherReading>(
     `/readings/stream?stationId=${stationId}`,
@@ -135,7 +144,6 @@ export const useLiveReadings = (stationId: string, onReading: (reading: WeatherR
   );
 };
 
-// Specific hook for live alerts
 export const useLiveAlerts = (stationId: string, onAlert: (alert: Alert) => void) => {
   return useSSEStream<Alert>(
     `/alerts/stream?stationId=${stationId}`,

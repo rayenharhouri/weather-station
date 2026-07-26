@@ -17,8 +17,6 @@ const RANGES: Array<{ value: Range; label: string }> = [
   { value: '30d', label: 'Last 30 days' },
 ];
 
-// Palette cycled across tokens — pulled from the metric colors so a token
-// series feels part of the same system as the rest of the dashboard.
 const TOKEN_PALETTE = [
   'var(--m-temp)',
   'var(--m-humidity)',
@@ -38,8 +36,6 @@ export default function UsagePage() {
     refetchInterval: 60_000,
   });
 
-  // Stable token → color map built once per snapshot, so re-renders don't
-  // flicker the legend. Cycles through `TOKEN_PALETTE`.
   const tokenColors = useMemo(() => {
     const colors: Record<string, string> = {};
     snapshot?.tokens.forEach((t, idx) => {
@@ -140,9 +136,6 @@ function PageHeader({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// KPI tile
-// ─────────────────────────────────────────────────────────────
 function Kpi({
   icon: Icon,
   label,
@@ -180,9 +173,6 @@ function Kpi({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Stacked volume chart by token
-// ─────────────────────────────────────────────────────────────
 interface UsageBucket {
   label: string;
   byToken: Record<string, number>;
@@ -199,7 +189,6 @@ function VolumeChartCard({
   tokenColors: Record<string, string>;
   range: Range;
 }) {
-  // Compute max stacked-total for Y scaling
   const maxStack = useMemo(() => {
     let m = 0;
     for (const b of buckets) {
@@ -303,9 +292,6 @@ function VolumeChartCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Top endpoints — horizontal bars sorted desc
-// ─────────────────────────────────────────────────────────────
 interface EndpointSlice {
   endpoint: string;
   calls: number;
@@ -357,9 +343,6 @@ function TopEndpointsCard({ endpoints }: { endpoints: EndpointSlice[] }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Per-token table with quota gauges
-// ─────────────────────────────────────────────────────────────
 interface TokenUsage {
   tokenId: string;
   name: string;
@@ -367,7 +350,6 @@ interface TokenUsage {
   callsRange: number;
   latencyP50Ms: number;
   errorRatePct: number;
-  /** 0–1 fraction of daily quota used. */
   quotaUsedDay: number;
 }
 
@@ -455,9 +437,6 @@ function QuotaGauge({ fraction, color }: { fraction: number; color: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Snapshot → UI adapter
-// ─────────────────────────────────────────────────────────────
 interface UsageData {
   buckets: UsageBucket[];
   tokens: TokenUsage[];
@@ -488,11 +467,6 @@ const EMPTY_USAGE: UsageData = {
   dailyRemaining: 10_000,
 };
 
-/**
- * Adapt the `/v1/usage` snapshot to the shape the charts already render.
- * Mostly a passthrough — the only translation is the bucket label, which
- * the backend emits as an ISO timestamp and the chart wants formatted.
- */
 function adaptSnapshot(snapshot: UsageSnapshot | undefined, range: Range): UsageData {
   if (!snapshot) return EMPTY_USAGE;
   return {

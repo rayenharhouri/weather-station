@@ -68,8 +68,6 @@ export class AlertsService {
     alert.status = 'resolved';
     alert.resolvedAt = new Date();
     alert.resolvedBy = userId;
-    // If never acknowledged, fold the ack timestamp in too so the timeline
-    // stays consistent. Some operators jump straight to resolve.
     if (!alert.acknowledgedAt) {
       alert.acknowledgedAt = alert.resolvedAt;
       alert.acknowledgedBy = userId;
@@ -77,12 +75,6 @@ export class AlertsService {
     return repo.save(alert);
   }
 
-  /**
-   * Threshold-evaluator entry point called by `ReadingsService.ingest()`
-   * after a reading lands. Persists one alert row per breach, pushes each
-   * onto the SSE channel, and swallows errors so a flaky alert write
-   * never blocks an ingest. Returns the alerts created (mostly for tests).
-   */
   async evaluateAndPublish(
     tenantSlug: string,
     reading: WeatherReading,
@@ -100,9 +92,6 @@ export class AlertsService {
       return [];
     }
 
-    // Skip-if-open: don't re-fire an identical (stationId, metric, severity)
-    // alert while one is still unresolved. Operators acknowledge → it stays
-    // open in dedupe terms until they hit resolve.
     const openByKey = await this.findOpenByKeys(repo, reading.stationId, breaches.map((b) => ({ metric: b.metric, severity: b.severity })));
 
     const created: Alert[] = [];

@@ -14,19 +14,15 @@ import {
 export type TokenStatus = 'active' | 'revoked' | 'expired';
 
 export interface TokenScope {
-  /** Empty array = home-tenant default; `['*']` = all stations. */
   stations: string[];
-  /** Empty array = all metrics. */
   metrics: string[];
   readOnly: boolean;
-  /** True if any cross-tenant grant is attached. */
   crossTenant?: boolean;
 }
 
 export interface ApiToken {
   id: string;
   name: string;
-  /** Last 4 chars of the real token, e.g. "aB7c". */
   suffix: string;
   status: TokenStatus;
   scope: TokenScope;

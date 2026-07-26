@@ -7,7 +7,6 @@ import { CreateTokenDto } from './dto/create-token.dto';
 
 export interface CreatedTokenResult {
   token: ApiToken;
-  /** Returned to the caller exactly once; never persisted in plaintext. */
   plaintext: string;
 }
 
@@ -62,7 +61,6 @@ export class TokensService {
     const token = await repo.findOne({ where: { id: tokenId } });
     if (!token) throw new NotFoundException(`Token '${tokenId}' not found`);
     if (token.userId !== userId) {
-      // Don't leak existence to other users.
       throw new ForbiddenException(`Token '${tokenId}' not found`);
     }
     if (token.status !== 'active') return token;
@@ -82,7 +80,6 @@ export class TokensService {
     if (existing.userId !== userId) {
       throw new ForbiddenException(`Token '${tokenId}' not found`);
     }
-    // Mark old as revoked atomically before issuing the replacement.
     existing.status = 'revoked';
     existing.revokedAt = new Date();
     await repo.save(existing);
@@ -90,14 +87,12 @@ export class TokensService {
     return this.create(tenantSlug, userId, {
       name: `${existing.name} (rotated)`,
       scope: existing.scope,
-      // Preserve original lifetime: pick the shortest preset that's >= remaining time.
       expiry: pickExpiryPreset(existing.expiresAt),
     });
   }
 }
 
 function generatePlaintext(): string {
-  // 32 chars from a curated alphabet (no easily-confused glyphs like 0/O/1/l/I).
   const buf = randomBytes(32);
   let out = 'wh_rsa_';
   for (let i = 0; i < 32; i++) {

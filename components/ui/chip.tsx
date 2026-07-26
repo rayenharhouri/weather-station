@@ -1,14 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-/**
- * Inline mono pill — small status / delta badge used inside cards and rows.
- * Variants colour-code direction:
- *   - up      = success green (delta increased)
- *   - down    = danger red (delta decreased)
- *   - flat    = subtle grey (no change)
- *   - default = muted (neutral content)
- */
 type ChipTone = 'default' | 'up' | 'down' | 'flat';
 
 export interface ChipProps extends React.HTMLAttributes<HTMLSpanElement> {

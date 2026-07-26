@@ -29,14 +29,6 @@ interface AdminIncomingGrant {
   created_at: string;
 }
 
-/**
- * Operations-side admin surface for grants that **target this tenant**.
- *
- * Researchers create grant requests from `/v1/grants/request` (token auth,
- * writes to the requesting tenant's `grants` table). Admins of the
- * *target* tenant approve or revoke them here (JWT auth + `admin` role).
- * Approval writes back to the requesting tenant's row.
- */
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
 @ApiTags('admin')
@@ -104,7 +96,6 @@ export class AdminGrantsController {
     grantId: string,
     homeSlug: string,
   ): void {
-    // eslint-disable-next-line no-console
     console.log(
       JSON.stringify({
         event: 'admin.grants',

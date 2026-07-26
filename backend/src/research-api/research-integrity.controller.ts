@@ -120,8 +120,6 @@ export class ResearchIntegrityController {
     @Body() body: V1VerifyRecordDto,
   ): Promise<{ data: V1VerificationResult }> {
     const result = await this.integrity.verifyRecord(tenant.slug, body.record_id);
-    // Scope-check the resolved station — researchers shouldn't be able to
-    // probe verify endpoints to fingerprint stations outside their grant.
     assertStationInScope(token, result.stationId);
     return { data: toV1Verification(result) };
   }

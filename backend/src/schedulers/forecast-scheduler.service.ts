@@ -14,16 +14,6 @@ import { TenantService } from '../tenancy/tenant.service';
 
 const HORIZONS: ForecastHorizon[] = ['1h', '3h', '6h', '24h'];
 
-/**
- * Periodic worker that pre-warms `ForecastsService.getOrCompute()` for
- * every (tenant, station, horizon) tuple. The on-demand path already
- * recomputes on stale-cache; this scheduler just keeps requests fast even
- * for stations nobody's looked at recently.
- *
- * Skipped in `test` mode. Default cadence: 10 minutes — matches the
- * `STALE_AFTER_MS` constant in `ForecastsService` so we re-warm just
- * before the cache would have been considered stale.
- */
 @Injectable()
 export class ForecastSchedulerService implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(ForecastSchedulerService.name);

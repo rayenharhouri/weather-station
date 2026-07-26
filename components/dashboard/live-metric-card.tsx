@@ -5,12 +5,6 @@ import { HairlineCard } from '@/components/ui/hairline-card';
 import { Chip } from '@/components/ui/chip';
 import { LiveDot } from '@/components/dashboard/live-dot';
 
-/**
- * Live page metric card. Same hairline shell as MetricTile but with:
- *   - bigger value (mono, 32px)
- *   - inline area chart that fills the body
- *   - optional delta + update-time row
- */
 export interface LiveMetricCardProps {
   icon: LucideIcon;
   label: string;

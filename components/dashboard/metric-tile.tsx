@@ -4,15 +4,6 @@ import { HairlineCard } from '@/components/ui/hairline-card';
 import { Chip } from '@/components/ui/chip';
 import { Sparkline } from '@/components/dashboard/sparkline';
 
-/**
- * The repeating dashboard unit. Three rows inside a hairline card:
- *   row 1 — metric icon (in metric colour) + label + delta chip
- *   row 2 — value (Geist Mono, 28px) + unit + optional status label
- *   row 3 — sparkline in the metric colour with 8% area fill
- *
- * `color` should be a CSS variable, e.g. `var(--m-temp)`. The MetricKey type
- * provides a typed helper but raw vars are also accepted.
- */
 export type MetricKey =
   | 'temp'
   | 'humidity'
@@ -39,7 +30,6 @@ export interface MetricTileProps {
   label: string;
   value: string | number;
   unit?: string;
-  /** Metric key (preferred) or raw CSS var. */
   metric?: MetricKey;
   color?: string;
   delta?: string;

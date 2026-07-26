@@ -17,14 +17,6 @@ class DeviceStatusQueryDto {
   stationId!: string;
 }
 
-/**
- * Computed device-status endpoint for the operations dashboard. Reads
- * derive entirely from the station's latest reading + a count of historical
- * readings — no separate `device_status` table needed.
- *
- * The route lives at `/device/status` (not `/readings/device-status`) to
- * match the frontend's existing `readingService.getDeviceStatus` call.
- */
 @UseGuards(JwtAuthGuard)
 @ApiTags('device')
 @ApiBearerAuth('jwt')

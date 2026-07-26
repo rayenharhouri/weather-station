@@ -1,4 +1,3 @@
-// Auth Types
 export interface User {
   id: string;
   email: string;
@@ -16,7 +15,6 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
-// Station Types
 export interface Station {
   id: string;
   name: string;
@@ -32,7 +30,6 @@ export interface Station {
 
 export type SensorType = 'temperature' | 'humidity' | 'pressure' | 'rainfall' | 'light' | 'airQuality' | 'battery' | 'signal';
 
-// Weather Reading Types
 export interface WeatherReading {
   id: string;
   stationId: string;
@@ -70,7 +67,6 @@ export interface DeviceStatus {
   recordsProcessed?: number;
 }
 
-// Forecast Types
 export interface Forecast {
   id: string;
   stationId: string;
@@ -89,7 +85,6 @@ export interface ForecastItem {
   confidence: number;
 }
 
-// Alert Types
 export interface Alert {
   id: string;
   stationId: string;
@@ -106,7 +101,6 @@ export interface Alert {
   resolvedBy?: string | null;
 }
 
-// Integrity / Blockchain Types
 export interface IntegrityBatch {
   id: string;
   stationId: string;
@@ -120,7 +114,6 @@ export interface IntegrityBatch {
   hederaTransactionId: string;
   consensusTimestamp: string;
   mirrorNodeVerified: boolean;
-  /** False only for a genuine Hedera submit — true for the local stub. */
   simulated: boolean;
   verifiedAt?: string | null;
   createdAt: string;
@@ -143,7 +136,6 @@ export interface RecordVerificationResult {
   verificationMessage: string;
 }
 
-// API Request/Response Types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -192,7 +184,6 @@ export interface IntegrityBatchParams {
   to?: string;
 }
 
-// Mock Data Detection
 export interface MockMetadata {
   isMockData: boolean;
   generatedAt: string;

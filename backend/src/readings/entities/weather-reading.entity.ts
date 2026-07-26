@@ -1,10 +1,5 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
-/**
- * Time-series sensor reading from an ESP32 station. The table is a TimescaleDB
- * hypertable partitioned by `recordedAt`. Composite PK is required because the
- * partition key must be part of any UNIQUE constraint.
- */
 @Entity({ name: 'readings' })
 @Index('IDX_readings_station_time', ['stationId', 'recordedAt'])
 export class WeatherReading {

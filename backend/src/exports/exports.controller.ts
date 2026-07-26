@@ -80,10 +80,6 @@ export class ExportsController {
     return { data: toV1Export(job) };
   }
 
-  /**
-   * Cancel a queued/running job. Idempotent: calling on an already-finished
-   * job is a no-op.
-   */
   @ApiOperation({ summary: "Cancel a queued/running job; idempotent." })
   @Post(':id/cancel')
   async cancel(
@@ -118,7 +114,6 @@ export class ExportsController {
     if (job.status !== 'ready' || !job.filePath) {
       throw new NotFoundException(`Export '${id}' is not ready for download`);
     }
-    // Verify the file is still on disk — TTL cleanup might've removed it.
     await stat(job.filePath).catch(() => {
       throw new NotFoundException(`Export '${id}' file no longer available`);
     });

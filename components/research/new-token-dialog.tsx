@@ -20,7 +20,6 @@ type ScopePreset = 'home-tenant' | 'specific-station' | 'cross-tenant';
 interface NewTokenDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called once the user closes the reveal phase. Pass the freshly-minted token back. */
   onCreated?: (token: ApiToken, plaintext: string) => void;
 }
 
@@ -78,7 +77,6 @@ export function NewTokenDialog({ open, onOpenChange, onCreated }: NewTokenDialog
       onCreated?.(revealed.token, revealed.plaintext);
     }
     onOpenChange(false);
-    // Reset after the close animation so the form doesn't flash empty mid-close.
     setTimeout(reset, 200);
   };
 
@@ -274,9 +272,6 @@ function RevealPhase({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Small form primitives — colocated since they're only used in this dialog.
-// ─────────────────────────────────────────────────────────────
 function Field({
   label,
   type,
@@ -356,9 +351,6 @@ function RadioOption<T extends string>({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────
 function generateToken(): string {
   const alphabet = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let body = '';

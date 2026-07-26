@@ -13,10 +13,6 @@ import {
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 
-/**
- * The shape returned by `GET /v1/account` — research-portal-facing preferences,
- * always populated with defaults so the frontend doesn't have to null-check.
- */
 export interface AccountSnapshot {
   notifications: NotificationPreferences;
   citationFormat: AccountPreference['citationFormat'];
@@ -26,11 +22,6 @@ export interface AccountSnapshot {
   affiliation: string | null;
 }
 
-/**
- * The shape returned by `GET /settings/preferences` — operations-page-facing
- * preferences (notifications toggles + alert thresholds). Same underlying
- * row as `AccountSnapshot`, different projection.
- */
 export interface SettingsSnapshot {
   notifications: OpsNotificationPreferences;
   thresholds: AlertThresholds;
@@ -44,8 +35,6 @@ export class AccountService {
     const ds = await this.tenantService.getDataSource(tenantSlug);
     return ds.getRepository(AccountPreference);
   }
-
-  // ─── /v1/account (token auth, researcher portal) ─────────────────
 
   async get(tenantSlug: string, userId: string): Promise<AccountSnapshot> {
     const repo = await this.repo(tenantSlug);
@@ -72,8 +61,6 @@ export class AccountService {
     return toAccountSnapshot(saved);
   }
 
-  // ─── /settings/preferences (JWT auth, operations dashboard) ─────
-
   async getSettings(tenantSlug: string, userId: string): Promise<SettingsSnapshot> {
     const repo = await this.repo(tenantSlug);
     const row = await repo.findOne({ where: { userId } });
@@ -97,14 +84,6 @@ export class AccountService {
     return toSettingsSnapshot(saved);
   }
 
-  // ─── shared upsert helper ─────────────────────────────────────────
-
-  /**
-   * Find-or-create the preferences row for a user. Reused by both the
-   * account-side and settings-side patch paths so a write coming from
-   * either endpoint correctly seeds the other endpoint's fields with
-   * defaults instead of leaving NULLs.
-   */
   private async touch(tenantSlug: string, userId: string): Promise<AccountPreference> {
     const repo = await this.repo(tenantSlug);
     let row = await repo.findOne({ where: { userId } });

@@ -5,17 +5,6 @@ import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HairlineCard } from '@/components/ui/hairline-card';
 
-/**
- * Root error boundary. Catches anything thrown by a server or client
- * component on a route below `app/`. Replaces the dev overlay so a
- * production crash lands somewhere the user can recover from instead of
- * a blank page.
- *
- * The error's `digest` is the only thing safe to surface — full stacks
- * would leak server internals. Operators correlate via the request id
- * the server logged ([request-logger.middleware.ts](../backend/src/observability/request-logger.middleware.ts))
- * and the matching `X-Request-Id` header on whichever fetch failed.
- */
 export default function GlobalError({
   error,
   reset,
@@ -24,7 +13,6 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.error('[app/error] caught:', error);
   }, [error]);
 

@@ -2,16 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
 import { Alert } from './entities/alert.entity';
 
-/**
- * In-memory pub/sub for the alerts SSE stream. Mirrors the shape of
- * [ReadingsStreamService](../readings/readings-stream.service.ts) — single
- * instance only; scaling horizontally needs a Redis/NATS adapter behind
- * this interface.
- *
- * Subscribers can opt to filter on stationId; when omitted they receive
- * the whole tenant firehose. Both shapes are useful: the operations
- * Alerts page wants the firehose, individual station drill-downs filter.
- */
 @Injectable()
 export class AlertsStreamService {
   private readonly channels = new Map<string, Subject<Alert>>();

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Auth schemas
 export const UserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -16,7 +15,6 @@ export const AuthResponseSchema = z.object({
   expiresIn: z.number(),
 });
 
-// Sensor enum — kept in lockstep with `SensorType` in types/index.ts.
 export const SensorTypeSchema = z.enum([
   'temperature',
   'humidity',
@@ -28,7 +26,6 @@ export const SensorTypeSchema = z.enum([
   'signal',
 ]);
 
-// Station schemas
 export const StationSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -42,8 +39,6 @@ export const StationSchema = z.object({
   updatedAt: z.string(),
 });
 
-// Weather reading schemas — every sensor field is nullable at the DB level
-// (a station may not have every sensor wired; see WeatherReading entity).
 export const WeatherReadingSchema = z.object({
   id: z.string(),
   stationId: z.string(),
@@ -60,7 +55,6 @@ export const WeatherReadingSchema = z.object({
   signalRssi: z.number().nullable().optional(),
 });
 
-// Summary metric enum — matches `WeatherSummary.metric` in types/index.ts.
 export const SummaryMetricSchema = z.enum([
   'temperature',
   'humidity',
@@ -91,7 +85,6 @@ export const DeviceStatusSchema = z.object({
   recordsProcessed: z.number().optional(),
 });
 
-// Forecast metric enum — only the four metrics the model projects.
 export const ForecastMetricSchema = z.enum([
   'temperature',
   'humidity',
@@ -99,7 +92,6 @@ export const ForecastMetricSchema = z.enum([
   'rainfall',
 ]);
 
-// Forecast schemas
 export const ForecastItemSchema = z.object({
   timestamp: z.string(),
   metric: ForecastMetricSchema,
@@ -118,7 +110,6 @@ export const ForecastSchema = z.object({
   explanation: z.string(),
 });
 
-// Alert schemas
 export const AlertSchema = z.object({
   id: z.string(),
   stationId: z.string(),
@@ -135,7 +126,6 @@ export const AlertSchema = z.object({
   resolvedBy: z.string().nullable().optional(),
 });
 
-// Integrity schemas
 export const IntegrityBatchSchema = z.object({
   id: z.string(),
   stationId: z.string(),
@@ -154,7 +144,6 @@ export const IntegrityBatchSchema = z.object({
   createdAt: z.string(),
 });
 
-// API token schemas (research portal)
 export const ApiTokenScopeSchema = z.object({
   stations: z.array(z.string()).default([]),
   metrics: z.array(z.string()).default([]),
@@ -201,7 +190,6 @@ export const RecordVerificationResultSchema = z.object({
   verificationMessage: z.string(),
 });
 
-// Generic response schema
 export const ApiResponseSchema = <T extends z.ZodType<any>>(dataSchema: T) =>
   z.object({
     success: z.boolean(),
@@ -219,19 +207,12 @@ export const PaginatedResponseSchema = <T extends z.ZodType<any>>(itemSchema: T)
     hasMore: z.boolean(),
   });
 
-// ─────────────────────────────────────────────────────────────
-// /v1/* response envelopes. All v1 endpoints wrap their payload
-// in `{ data, next_cursor? }`. Snake_case fields are translated
-// back to camelCase by the service layer.
-// ─────────────────────────────────────────────────────────────
-
 export const V1EnvelopeSchema = <T extends z.ZodType<any>>(dataSchema: T) =>
   z.object({
     data: dataSchema,
     next_cursor: z.string().nullable().optional(),
   });
 
-// Datasets
 export const V1DatasetSchema = z.object({
   id: z.string(),
   owner_id: z.string().nullable(),
@@ -252,7 +233,6 @@ export const V1DatasetSchema = z.object({
   updated_at: z.string(),
 });
 
-// Usage
 export const V1UsageBucketSchema = z.object({
   bucketStart: z.string(),
   byToken: z.record(z.string(), z.number()),
@@ -291,7 +271,6 @@ export const V1UsageSchema = z.object({
   topEndpoints: z.array(V1UsageEndpointSchema),
 });
 
-// Exports
 export const V1ExportSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -312,7 +291,6 @@ export const V1ExportSchema = z.object({
   error_message: z.string().nullable(),
 });
 
-// Account
 export const V1AccountSchema = z.object({
   notifications: z.object({
     weeklyDigest: z.boolean(),
@@ -328,7 +306,6 @@ export const V1AccountSchema = z.object({
   affiliation: z.string().nullable(),
 });
 
-// Grants
 export const V1GrantSchema = z.object({
   id: z.string(),
   target_tenant: z.string(),

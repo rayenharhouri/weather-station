@@ -12,23 +12,6 @@ import { IngestReadingDto } from '../readings/dto/ingest-reading.dto';
 import { ReadingsService } from '../readings/readings.service';
 import { DeviceJwtService } from './device-jwt.service';
 
-/**
- * MQTT ingest worker.
- *
- * - Connects on `OnApplicationBootstrap` (skipped in `test` mode).
- * - Subscribes to `tenants/+/stations/+/readings`.
- * - For each message:
- *     1. Parse topic → `tenantSlug` + `stationId`.
- *     2. Parse body as `{ token, reading }`.
- *     3. Verify the device JWT and assert claims match the topic.
- *     4. Validate `reading` against `IngestReadingDto`.
- *     5. Hand off to `ReadingsService.ingest()` which persists, fans out to
- *        SSE subscribers, and runs the alerts threshold evaluator.
- *
- * Failures are logged with a short reason but never re-thrown — one bad
- * device shouldn't take the worker down. Reconnection is delegated to
- * the mqtt client's built-in retry behaviour.
- */
 const TOPIC_PATTERN_DEFAULT = 'tenants/+/stations/+/readings';
 
 interface MqttPayload {
@@ -80,7 +63,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
 
     this.client.on('message', (topic, payload) => {
       void this.handleMessage(topic, payload).catch((err) => {
-        // Catch-all so a handler throw never bubbles into the mqtt internals.
         this.logger.warn(
           `unhandled handler error for ${topic}: ${err instanceof Error ? err.message : err}`,
         );
@@ -95,10 +77,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
     }
   }
 
-  /**
-   * Public entry for tests + the (future) HTTP-mirror endpoint to push a
-   * "fake" MQTT message through the same validation path.
-   */
   async handleMessage(topic: string, payload: Buffer): Promise<void> {
     const parsedTopic = parseTopic(topic);
     if (!parsedTopic) {
@@ -119,9 +97,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
       return;
     }
 
-    // Verify the device JWT and assert the claims match the topic. A device
-    // can't publish to a station it doesn't own, even with a valid token
-    // for another station — we treat that as `cross_station_denied`.
     let claims;
     try {
       claims = this.deviceJwt.verify(body.token);
@@ -144,8 +119,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
       return;
     }
 
-    // Validate the reading body. Use the same DTO as the HTTP path so
-    // ESP32 publishers + curl scripts share one source of truth.
     const dto = plainToInstance(IngestReadingDto, {
       ...body.reading,
       stationId, // topic wins; ignore any clash in the body
@@ -159,8 +132,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
       return;
     }
     if (claims.deviceId && !dto.deviceId) {
-      // Stamp the token's deviceId onto the reading when the body omits it,
-      // so the row can be traced back to the hardware that produced it.
       dto.deviceId = claims.deviceId;
     }
 
@@ -175,7 +146,6 @@ export class IngestService implements OnApplicationBootstrap, OnModuleDestroy {
 }
 
 function parseTopic(topic: string): { tenantSlug: string; stationId: string } | null {
-  // tenants/{slug}/stations/{uuid}/readings
   const m = topic.match(/^tenants\/([^/]+)\/stations\/([^/]+)\/readings$/);
   if (!m) return null;
   return { tenantSlug: m[1], stationId: m[2] };

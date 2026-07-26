@@ -44,11 +44,6 @@ interface ParamsFormProps {
   modifiedFields: number;
 }
 
-/**
- * The left-side parameters panel. Form state is fully controlled by the
- * parent (`PlaygroundContent`) so it can also drive the request preview at
- * the bottom of the page.
- */
 export function ParamsForm({
   query,
   onChange,
@@ -209,9 +204,6 @@ export function ParamsForm({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Local primitives — kept colocated since they're only used here
-// ─────────────────────────────────────────────────────────────
 function FieldLabel({
   label,
   type,

@@ -23,15 +23,10 @@ import { useAuthContext } from '@/providers/AuthProvider';
 import { authService } from '@/services/api';
 
 export interface TopbarProps {
-  /** Currently selected station — drives the breadcrumb + selector. */
   station?: { name: string; location?: string };
-  /** Fleet station count for the "/12" tail on the selector. */
   totalStations?: number;
-  /** Live connection state — drives the LiveDot. Default: 'live'. */
   liveState?: LiveState;
-  /** Throughput summary shown next to the LiveDot. */
   liveDetail?: string;
-  /** Mobile-only: callback to open the nav drawer. */
   onOpenMobileNav?: () => void;
 }
 
@@ -67,7 +62,6 @@ export function Topbar({
       .map((part) => part[0]?.toUpperCase())
       .join('') ?? 'U';
 
-  // Current page label for the breadcrumb tail
   const pageLabel = pathname?.split('/').filter(Boolean)[0] ?? 'dashboard';
   const formattedPage = pageLabel.charAt(0).toUpperCase() + pageLabel.slice(1);
 

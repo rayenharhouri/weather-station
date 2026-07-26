@@ -18,10 +18,6 @@ const seed = {
   temp: [21, 21.3, 21.7, 22, 22.4, 22.8, 23, 23.2, 23.3, 23.4, 23.4, 23.3, 23.2, 23.3, 23.4, 23.4],
 };
 
-/**
- * Internal route. Renders every shared primitive in isolation against the
- * new background. Not linked from the nav — open `/design` directly.
- */
 export default function DesignShowcase() {
   return (
     <div className="min-h-dvh bg-bg text-fg">

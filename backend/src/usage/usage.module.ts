@@ -11,8 +11,6 @@ import { UsageService } from './usage.service';
   controllers: [UsageController],
   providers: [
     UsageService,
-    // Global interceptor: runs after every request, no-ops when the request
-    // wasn't authenticated by `TokenAuthGuard` (no `req.apiToken`).
     { provide: APP_INTERCEPTOR, useClass: RequestLogInterceptor },
   ],
   exports: [UsageService],

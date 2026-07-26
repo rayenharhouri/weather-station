@@ -43,8 +43,6 @@ const toCardDataset = (d: DatasetResource): Dataset => ({
   title: d.title,
   description: d.description,
   visibility: d.visibility,
-  // Backend metric is free-form; fall back to `multi` so the card's color
-  // map always has a known key to look up.
   metric: (KNOWN_METRICS as readonly string[]).includes(d.metric)
     ? (d.metric as DatasetMetric)
     : 'multi',
@@ -69,8 +67,6 @@ export default function DatasetsPage() {
     staleTime: 60_000,
   });
 
-  // Filter client-side so tab + search switches feel instant. The list is
-  // capped at 200 rows by the backend, so this is cheap.
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return rows
@@ -93,9 +89,6 @@ export default function DatasetsPage() {
   }, [rows]);
 
   const handleDownload = (id: string, format: DatasetFormat) => {
-    // Phase 3.4's exports module owns materialised downloads. The dataset
-    // endpoint serves a metadata-CSV stub for now; we open it in a new tab
-    // so the click is observably wired without a download library.
     const href = `${datasetService.downloadHref(id)}?format=${format}`;
     window.open(href, '_blank', 'noopener');
   };

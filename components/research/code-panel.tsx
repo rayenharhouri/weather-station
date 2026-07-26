@@ -5,9 +5,6 @@ import { Copy, Terminal, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HairlineCard } from '@/components/ui/hairline-card';
 
-// ─────────────────────────────────────────────────────────────
-// Sample request payloads — kept inline so the docs page stays self-contained.
-// ─────────────────────────────────────────────────────────────
 export type SampleLang = 'curl' | 'python' | 'node' | 'r';
 
 interface LangSpec {
@@ -72,10 +69,6 @@ const LANGS: LangSpec[] = [
   { key: 'r', label: 'R', text: SAMPLES.r },
 ];
 
-// ─────────────────────────────────────────────────────────────
-// Tiny inline highlighter — keywords + strings only. Not Shiki-grade,
-// but small (≈ 60 lines), runs at render time, no extra deps.
-// ─────────────────────────────────────────────────────────────
 const KEYWORDS: Record<SampleLang, RegExp | null> = {
   curl: null,
   python: /\b(from|import|def|class|return|None|True|False)\b/g,
@@ -87,7 +80,6 @@ const STRING_REGEX = /"[^"]*"|'[^']*'/g;
 
 function highlightLine(line: string, lang: SampleLang, lineKey: number) {
   if (lang === 'curl') {
-    // Highlight curl flags + the rest of the line as "string"-ish.
     const flagMatch = line.match(/^(\s*)(curl|-H|-G|-d)(\s+)(.*)$/);
     if (flagMatch) {
       const [, lead, flag, sp, rest] = flagMatch;
@@ -171,9 +163,6 @@ function CodeBlock({ lang }: { lang: SampleLang }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// JSON response viewer — coloured by token type
-// ─────────────────────────────────────────────────────────────
 function JsonViewer() {
   const Str = ({ children }: { children: ReactNode }) => (
     <span style={{ color: 'var(--m-light)' }}>{`"${children}"`}</span>
@@ -221,9 +210,6 @@ function JsonViewer() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// CodePanel — request card (tabs + sample) + response card (status + JSON)
-// ─────────────────────────────────────────────────────────────
 export function CodePanel() {
   const [lang, setLang] = useState<SampleLang>('curl');
 

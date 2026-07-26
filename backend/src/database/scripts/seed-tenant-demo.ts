@@ -1,21 +1,3 @@
-/**
- * Demo seed — populates a tenant with everything the UI demos need:
- *
- *   - station + 24h of synthetic readings (delegated to `seed-tenant.ts`'s
- *     readings logic, replicated here so the demo seed is one self-contained
- *     command)
- *   - three alerts (open, acknowledged, resolved)
- *   - one anchored integrity batch with the correct Merkle root
- *   - two saved datasets (one private, one public)
- *   - one export job in each terminal state (ready, failed, expired)
- *
- * Usage:
- *   npm run tenant:seed:demo -- --slug=enit
- *
- * Idempotent: re-running clears the 24h reading window + the demo alerts /
- * batches / datasets / exports it owns and re-creates them. Real tenant
- * data (older readings, user-minted tokens, etc.) is left alone.
- */
 import 'reflect-metadata';
 import 'dotenv/config';
 import { MasterDataSource } from '../master-data-source';
@@ -41,7 +23,6 @@ function parseArgs(argv: string[]): Args {
     if (m) out[m[1]] = m[2];
   }
   if (!out['slug']) {
-    // eslint-disable-next-line no-console
     console.error('Missing --slug=<tenant>');
     process.exit(1);
   }
@@ -57,7 +38,6 @@ async function main(): Promise<void> {
   });
   await MasterDataSource.destroy();
   if (!tenant) {
-    // eslint-disable-next-line no-console
     console.error(`No active tenant '${slug}'.`);
     process.exit(2);
   }
@@ -79,7 +59,6 @@ async function main(): Promise<void> {
     const datasetRepo = ds.getRepository(Dataset);
     const exportRepo = ds.getRepository(ExportJob);
 
-    // ── Station + 24h of readings (idempotent) ────────────────────
     const stationName = 'demo-rooftop';
     let station = await stationRepo.findOne({ where: { name: stationName } });
     if (!station) {
@@ -105,10 +84,8 @@ async function main(): Promise<void> {
     }
 
     const readings = await seedReadings(readingRepo, station.id);
-    // eslint-disable-next-line no-console
     console.log(`▸ readings: ${readings.length}`);
 
-    // ── Alerts (one open, one acknowledged, one resolved) ─────────
     await alertRepo.delete({ stationId: station.id });
     const now = new Date();
     await alertRepo.save([
@@ -146,10 +123,8 @@ async function main(): Promise<void> {
         resolvedAt: new Date(now.getTime() - 4 * 60 * 60_000),
       }),
     ]);
-    // eslint-disable-next-line no-console
     console.log(`▸ alerts: 3 (open · acknowledged · resolved)`);
 
-    // ── Integrity batch (real Merkle root over the seeded readings) ─
     await batchRepo.delete({ stationId: station.id });
     if (readings.length > 0) {
       const sorted = [...readings].sort(
@@ -179,11 +154,9 @@ async function main(): Promise<void> {
           verifiedAt: new Date(),
         }),
       );
-      // eslint-disable-next-line no-console
       console.log(`▸ integrity batch: root=${root.slice(0, 12)}…  leaves=${leaves.length}`);
     }
 
-    // ── Datasets ──────────────────────────────────────────────────
     await datasetRepo
       .createQueryBuilder()
       .delete()
@@ -223,10 +196,8 @@ async function main(): Promise<void> {
         playgroundHref: null,
       }),
     ]);
-    // eslint-disable-next-line no-console
     console.log(`▸ datasets: 2 (1 public · 1 private)`);
 
-    // ── Exports (one ready, one failed, one expired) ──────────────
     await exportRepo
       .createQueryBuilder()
       .delete()
@@ -294,17 +265,14 @@ async function main(): Promise<void> {
         filePath: null,
       }),
     ]);
-    // eslint-disable-next-line no-console
     console.log(`▸ exports: 3 (ready · failed · expired)`);
 
-    // eslint-disable-next-line no-console
     console.log(`\n✓ Demo seed complete for tenant '${slug}'.`);
   } finally {
     await ds.destroy();
   }
 }
 
-// ── Synthetic readings ────────────────────────────────────────────
 async function seedReadings(repo: any, stationId: string): Promise<WeatherReading[]> {
   const hours = 24;
   const intervalMin = 5;
@@ -356,7 +324,6 @@ function sinDay(h: number): number {
 }
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('\n✗ demo seed failed:', err);
   process.exit(1);
 });

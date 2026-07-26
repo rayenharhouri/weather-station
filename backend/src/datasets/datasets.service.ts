@@ -17,15 +17,6 @@ export class DatasetsService {
     return ds.getRepository(Dataset);
   }
 
-  /**
-   * Visibility rules:
-   *   - `public`  → anyone in the tenant sees it
-   *   - `shared`  → anyone in the tenant sees it (cross-tenant overlay is a
-   *                 Phase 5+ enhancement)
-   *   - `private` → only the `ownerId` sees it
-   *
-   * `visibility=all` returns everything the caller is allowed to see.
-   */
   async list(
     tenantSlug: string,
     userId: string,
@@ -66,7 +57,6 @@ export class DatasetsService {
     const ds = await repo.findOne({ where: { id: datasetId } });
     if (!ds) throw new NotFoundException(`Dataset '${datasetId}' not found`);
     if (ds.visibility === 'private' && ds.ownerId !== userId) {
-      // Same code path as not-found — don't leak existence of others' privates.
       throw new NotFoundException(`Dataset '${datasetId}' not found`);
     }
     return ds;

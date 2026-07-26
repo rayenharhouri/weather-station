@@ -3,11 +3,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-/**
- * Multi-select chip — used as a metric selector on the Analytics page.
- * Active state uses the metric's own colour as a 2px left bar; inactive is
- * a regular hairline chip.
- */
 export interface ToggleChipProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color'> {
   active: boolean;
   color?: string;

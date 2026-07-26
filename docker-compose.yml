@@ -29,9 +29,6 @@ services:
       - mosquitto_data:/mosquitto/data
       - mosquitto_logs:/mosquitto/log
 
-  # One-shot: applies master DB migrations and then exits. The backend
-  # service `depends_on` it with `service_completed_successfully` so a
-  # fresh `docker compose up` never races the schema.
   migrate:
     build:
       context: ./backend
@@ -55,8 +52,6 @@ services:
       TENANT_DB_PREFIX: tenant_
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       DEVICE_JWT_SECRET: ${DEVICE_JWT_SECRET:-dev-device-secret-change-me}
-    # Use the compiled JS data-source so we don't need ts-node in the
-    # production image.
     command:
       - sh
       - -c
@@ -117,8 +112,6 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # `NEXT_PUBLIC_*` values are inlined into the JS bundle at build
-        # time, so they must be supplied here, not in `environment`.
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
         NEXT_PUBLIC_WH_MODE: ${WH_MODE:-demo}
     image: weatherhub-frontend:latest

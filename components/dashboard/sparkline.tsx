@@ -1,12 +1,5 @@
 import * as React from 'react';
 
-/**
- * Sparkline — line chart in the metric colour, with an optional 8% area
- * fill underneath. Used inside MetricTile and anywhere we need a small
- * trend indicator. Last point is highlighted with a 2px circle.
- *
- * Colour should be a CSS variable (e.g. `var(--m-temp)`), not a raw hex.
- */
 export interface SparklineProps {
   data: number[];
   color: string;

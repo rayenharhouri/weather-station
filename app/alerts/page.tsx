@@ -87,7 +87,6 @@ function AlertsContent() {
 
   const lastTriggered = filtered[0]?.triggeredAt;
 
-  // Clear selection if the selected alert is no longer in the filtered view.
   const selectedAlert = useMemo(
     () => (selectedId ? filtered.find((a) => a.id === selectedId) ?? null : null),
     [filtered, selectedId],
@@ -172,7 +171,6 @@ function AlertsContent() {
       >
         <HairlineCard
           className={[
-            // On mobile, hide the list while a row is selected so the panel takes over.
             selectedAlert ? 'hidden lg:block' : 'block',
           ].join(' ')}
         >

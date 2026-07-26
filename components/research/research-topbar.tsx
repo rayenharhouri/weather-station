@@ -13,7 +13,6 @@ export interface ResearchBreadcrumb {
 }
 
 interface ResearchTopbarProps {
-  /** Breadcrumb segments. Last one renders as the current location (no link styling). */
   crumbs?: ResearchBreadcrumb[];
 }
 
@@ -22,9 +21,6 @@ export function ResearchTopbar({ crumbs = [] }: ResearchTopbarProps) {
   const { user } = useAuthContext();
   const { active } = useActiveToken();
 
-  // Resolve the id → token row from the tokens query (cached by react-query
-  // so this is free once the Account page has run). When no token is picked
-  // yet the chip still renders, with a "pick a token" affordance.
   const { data: tokensPage } = useQuery({
     queryKey: ['v1.tokens'],
     queryFn: () => tokenService.list(),

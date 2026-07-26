@@ -9,10 +9,6 @@ export interface TenantConnectionConfig {
   database: string;
 }
 
-/**
- * Build a TypeORM DataSource for a single tenant database. All tenant DBs
- * share the same set of entities and migrations (registered in tenant-entities.ts).
- */
 export const createTenantDataSource = (conn: TenantConnectionConfig): DataSource => {
   return new DataSource({
     type: 'postgres',

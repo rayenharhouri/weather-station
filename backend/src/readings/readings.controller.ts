@@ -91,10 +91,6 @@ export class ReadingsController {
     return this.readingsService.ingest(tenant.slug, dto);
   }
 
-  /**
-   * Server-Sent Events stream of new readings for a station.
-   * Auth: Authorization Bearer header OR ?token=<jwt> query (EventSource fallback).
-   */
   @ApiOperation({ summary: "SSE stream of new readings (header bearer or ?token=)." })
   @UseGuards(JwtAuthGuard)
   @Sse('readings/stream')

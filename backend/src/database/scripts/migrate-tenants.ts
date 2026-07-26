@@ -4,13 +4,6 @@ import { MasterDataSource } from '../master-data-source';
 import { createTenantDataSource } from '../tenant-data-source.factory';
 import { Tenant } from '../../tenancy/entities/tenant.entity';
 
-/**
- * Apply pending tenant migrations to every active tenant database.
- *
- * Usage:
- *   npm run tenant:migrate            # migrate all active tenants
- *   npm run tenant:migrate -- --slug=enit   # only one tenant
- */
 async function run(): Promise<void> {
   const slugFlag = process.argv
     .slice(2)
@@ -25,20 +18,16 @@ async function run(): Promise<void> {
     : await tenantRepo.find({ where: { active: true }, order: { slug: 'ASC' } });
 
   if (tenants.length === 0) {
-    // eslint-disable-next-line no-console
     console.log(
       slugFlag
         ? `No active tenant '${slugFlag}'.`
         : 'No active tenants — nothing to migrate. (Provision one with `npm run tenant:provision`.)',
     );
     await MasterDataSource.destroy();
-    // Exit 0 so the Docker `migrate` one-shot doesn't block first boots
-    // where the master DB has just been created with no tenants yet.
     return;
   }
 
   for (const tenant of tenants) {
-    // eslint-disable-next-line no-console
     console.log(`▸ migrating ${tenant.slug} (${tenant.dbName})…`);
     const ds = createTenantDataSource({
       host: process.env.TENANT_DB_HOST ?? 'localhost',
@@ -50,7 +39,6 @@ async function run(): Promise<void> {
     await ds.initialize();
     try {
       const ran = await ds.runMigrations();
-      // eslint-disable-next-line no-console
       console.log(
         ran.length
           ? `  applied ${ran.length} migration${ran.length === 1 ? '' : 's'}: ${ran.map((m) => m.name).join(', ')}`
@@ -62,12 +50,10 @@ async function run(): Promise<void> {
   }
 
   await MasterDataSource.destroy();
-  // eslint-disable-next-line no-console
   console.log(`\n✓ Done.`);
 }
 
 run().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('\n✗ tenant:migrate failed:', err);
   process.exit(1);
 });

@@ -16,19 +16,11 @@ export interface FetchOptions extends RequestInit {
   retries?: number;
 }
 
-/** Storage key the operations dashboard stores the JWT under. */
 export const OPS_AUTH_TOKEN_KEY = 'weather_station_auth_token';
 
-/** Storage key the researcher portal stores the active API token under. */
 export const ACTIVE_API_TOKEN_KEY = 'wh.research.activeApiToken';
 
 export interface CreateApiClientOptions {
-  /**
-   * Override the default header-attached bearer. Return `null` to send no
-   * `Authorization` header at all — useful for the `/v1/*` client when the
-   * user hasn't picked an active token yet (the call will 401 in a way the
-   * UI can render).
-   */
   getAuthToken?: () => string | null;
 }
 
@@ -107,7 +99,6 @@ export const createApiClient = (
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
-        // Don't retry on 4xx errors (except 408 timeout) or auth errors
         const isClientError =
           error instanceof ApiError &&
           error.statusCode &&
@@ -119,7 +110,6 @@ export const createApiClient = (
           break;
         }
 
-        // Exponential backoff
         await new Promise((resolve) =>
           setTimeout(resolve, Math.pow(2, attempt) * 1000)
         );
@@ -209,13 +199,6 @@ export const createApiClient = (
 
 export const apiClient = createApiClient(config.apiUrl);
 
-/**
- * `/v1/*` client. Sends the active API token the researcher has selected
- * on `/research/account` (mirrored into `localStorage` for sync access from
- * `getAuthToken`). When no token is selected the call lands without an
- * `Authorization` header and the backend returns `401 missing_token` —
- * pages render an "Pick a token to view this page" empty state.
- */
 export const v1ApiClient = createApiClient(config.apiUrl, {
   getAuthToken: () => {
     if (typeof window === 'undefined') return null;

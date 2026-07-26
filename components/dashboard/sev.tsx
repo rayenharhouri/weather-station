@@ -1,10 +1,5 @@
 import * as React from 'react';
 
-/**
- * Severity shape primitives — info=dot, warn=triangle, critical=diamond.
- * Shape varies in addition to colour so the severity scale stays legible
- * for colour-blind users (WCAG 1.4.1).
- */
 type SevSize = number;
 
 interface SevShapeProps {

@@ -6,30 +6,14 @@ import type { Alert } from '@/types';
 
 interface AlertRowProps {
   alert: Alert;
-  /** Show station id alongside the metric. Dashboard hides it; alerts page shows it. */
   showStation?: boolean;
-  /** Selection state. When true, the row gets an accent bar + highlighted background. */
   selected?: boolean;
-  /** Selecting an alert opens the detail panel. */
   onSelect?: (id: string) => void;
-  /** Pass an action handler to render the Ack button. Omit to hide. */
   onAcknowledge?: (id: string) => void;
-  /** Pass an action handler to render the Resolve button. Omit to hide. */
   onResolve?: (id: string) => void;
-  /** Pending state — disables the action buttons. */
   pending?: boolean;
 }
 
-/**
- * Single alert row — the repeating unit used by AlertsCard (dashboard preview)
- * and by the full Alerts page list. Severity is communicated by both the
- * shape primitive (info=dot / warn=triangle / critical=diamond) and the
- * inline colour, so the row stays legible for colour-blind users.
- *
- * When `onSelect` is wired, the row acts as a button (role=button, keyboard
- * activation) and dispatches selection. Ack/Resolve buttons live inside but
- * stop event propagation so they don't accidentally select the row.
- */
 export function AlertRow({
   alert,
   showStation,
